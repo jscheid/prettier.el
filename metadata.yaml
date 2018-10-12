@@ -1,0 +1,10 @@
+---
+header-includes:
+  - |
+    ```{=texinfo}
+    @dircategory Emacs
+    @direntry
+    * Prettier: (prettier).         Prettify code on save.
+    @end direntry
+    ```
+...

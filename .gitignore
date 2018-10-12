@@ -1,0 +1,11 @@
+/node_modules/
+*.info
+*.texi
+/README
+*.base64
+*-min.js
+*.tar
+*.sig
+*.elc
+*-pkg.el
+dir

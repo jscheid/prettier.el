@@ -12,7 +12,7 @@ overhead is only paid once, and so that V8 JIT compilation has a
 better opportunity to work its magic.
 
 Additional features include first-class support for reformatting
-remote files via `tramp-mode' and wide integration with other major
+remote files via `tramp-mode` and wide integration with other major
 modes.
 
 This is not the official Prettier integration for Emacs. The official
@@ -23,7 +23,7 @@ package can be found at https://github.com/prettier/prettier-emacs.\
 
 This package is not yet on MELPA because it's not as stable as
 `prettier-emacs`. For now, head to the [Releases
-page](https://github.com/jscheid/prettier-el/releases/) and download
+page](https://github.com/jscheid/prettier.el/releases/) and download
 a tarball, then `M-x package-install-file` if you're feeling lucky.
 
 A `node` executable needs to be on `exec-path`. It is recommended to

@@ -6,7 +6,7 @@
 ;; Version: 0.1.0
 ;; Created: 7 Nov 2018
 ;; Keywords: convenience, languages, files
-;; Homepage: https://github.com/jscheid/prettier-el
+;; Homepage: https://github.com/jscheid/prettier.el
 ;; Dependencies: ((emacs "24.1") (nvm "20171217.1636"))
 
 ;; This file is not part of GNU Emacs.
@@ -50,7 +50,7 @@
 
   (defun prettier--readme-link (anchor)
     "Return the URL of the Readme section identified by ANCHOR."
-    (concat "https://github.com/jscheid/prettier-el/README#"
+    (concat "https://github.com/jscheid/prettier.el/README#"
             anchor)))
 
 
@@ -61,7 +61,7 @@
   :group 'files
   :prefix "prettier"
   :link '(url-link :tag "Repository"
-                   "https://github.com/jscheid/prettier-el"))
+                   "https://github.com/jscheid/prettier.el"))
 
 (defcustom prettier-mode-pre-warm 'full
   "Choose how to pre-warm Prettier caches.

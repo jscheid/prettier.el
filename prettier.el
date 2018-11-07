@@ -63,23 +63,23 @@
   :link '(url-link :tag "Repository"
                    "https://github.com/jscheid/prettier.el"))
 
-(defcustom prettier-mode-pre-warm 'full
+(defcustom prettier-pre-warm 'full
   "Choose how to pre-warm Prettier caches.
 
-Essentially this selects when you wait for Prettier: with `none',
-you tend to wait for it on first save.  With `full', you wait
-when `prettier-mode' is first activated.  `some' is a compromise,
-with it you wait some on first activation and some on first
-save."
+Essentially this selects when you wait for Prettier startup
+overhead: with `none', you tend to wait for it on first save.
+With `full', you wait when `prettier-mode' is first activated.
+`some' is a compromise, with it you wait some on first activation
+and some on first save."
   :type '(choice
           (none :tag "No pre-warming, everything on-demand")
           (some :tag "Start server early, no other pre-warming")
           (full :tag "Pre-warm as much as possible"))
   :package-version '(prettier . "0.1.0")
   :group 'prettier
-  :link '(info-link "(prettier)prettier-mode-pre-warm")
+  :link '(info-link "(prettier)prettier-pre-warm")
   :link `(url ,(prettier--readme-link
-                "prettier-mode-pre-warm")))
+                "prettier-pre-warm")))
 
 (defcustom prettier-inline-errors-flag nil
   "Non-nil means to show Prettier errors inline using overlays.
@@ -426,9 +426,9 @@ should be used when filing bug reports."
   :lighter " Prettier"
   (if prettier-mode
       (progn
-        (when (not (eq prettier-mode-pre-warm 'none))
+        (when (not (eq prettier-pre-warm 'none))
           (prettier--get-process
-           (eq prettier-mode-pre-warm 'full)))
+           (eq prettier-pre-warm 'full)))
         (when prettier-mode-sync-config-flag
           (prettier--maybe-sync-config)
           (add-hook 'after-change-major-mode-hook
@@ -455,7 +455,7 @@ should be used when filing bug reports."
                (not prettier-mode)
                (prettier--parser))
       (with-temp-message
-          (when (not (eq prettier-mode-pre-warm 'none))
+          (when (not (eq prettier-pre-warm 'none))
             "Prettier pre-warming...")
         (prettier-mode))))
   :group 'prettier)

@@ -15,9 +15,9 @@ Additional features include first-class support for reformatting
 remote files via `tramp-mode` and wide integration with other major
 modes.
 
-This is not the official Prettier integration for Emacs. The official
-package can be found at https://github.com/prettier/prettier-emacs.\
-\
+This is not the official Prettier integration for Emacs. The official package
+can be found at
+[https://github.com/prettier/prettier-emacs](https://github.com/prettier/prettier-emacs).
 
 ## Installation
 
@@ -68,8 +68,7 @@ enabled), and `M-x prettier-prettify-region` to prettify region (but
 note that region should align with a complete block of code).
 
 If you give a prefix argument to either of these two commands you will
-be able to set/override the Prettier parser to use for formatting.\
-\
+be able to set/override the Prettier parser to use for formatting.
 
 ### Changing Prettier Configuration
 

@@ -175,6 +175,14 @@ or for which you have plugins installed."
 
 ;;;; Non-customizable
 
+(defconst prettier-el-version
+  (eval-when-compile
+    (package-version-join
+     (package-desc-version
+      (save-excursion
+        (package-buffer-info)))))
+  "Version of `prettier' package.")
+
 (defconst prettier-benign-errors
   '("Error: Couldn't resolve parser")
   "Errors in this list are shown in the echo area.
@@ -398,6 +406,7 @@ should be used when filing bug reports."
   (let ((info
          (list
           :emacs-version (emacs-version)
+          :prettier-el-version prettier-el-version
           :buffer-file-name buffer-file-name
           :remote-id (file-remote-p buffer-file-name)
           :major-mode major-mode

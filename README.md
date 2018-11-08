@@ -87,7 +87,7 @@ hosts; you will have to ensure `tramp-remote-path` is set correctly.
 Remote formatting might be improved in the future in the following ways:
 
 - Using remote Prettier only to determine options for the remote file,
-  but useing local Prettier to do the actual formatting. This would help
+  but using local Prettier to do the actual formatting. This would help
   with large source files and slow connections.
 
 - Obviating the need for remote Prettier by walking the remote

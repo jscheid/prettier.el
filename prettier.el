@@ -42,6 +42,7 @@
 (require 'json)
 (require 'nvm)
 (require 'tramp)
+(require 'subr-x)
 
 (eval-when-compile
   (require 'cl)

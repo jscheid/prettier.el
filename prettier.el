@@ -907,7 +907,8 @@ PROCESS-BUF is the process buffer."
          timestamps)
     (unwind-protect
         (when (< start-point end-point)
-          (let ((write-region-inhibit-fsync t))
+          (let ((write-region-inhibit-fsync t)
+                (coding-system-for-write 'utf-8-unix))
             (write-region start-point
                           end-point
                           tempfile

@@ -78,8 +78,9 @@ and some on first save."
   :package-version '(prettier . "0.1.0")
   :group 'prettier
   :link '(info-link "(prettier)prettier-pre-warm")
-  :link `(url ,(prettier--readme-link
-                "prettier-pre-warm")))
+  :link `(url ,(eval-when-compile
+                 (prettier--readme-link
+                  "prettier-pre-warm"))))
 
 (defcustom prettier-inline-errors-flag nil
   "Non-nil means to show Prettier errors inline using overlays.
@@ -93,8 +94,9 @@ When nil, send errors to the default error buffer."
   :package-version '(prettier . "0.1.0")
   :group 'prettier
   :link '(info-link "(prettier)prettier-inline-errors-flag")
-  :link `(url ,(prettier--readme-link
-                "prettier-inline-errors-flag")))
+  :link `(url ,(eval-when-compile
+                 (prettier--readme-link
+                  "prettier-inline-errors-flag"))))
 
 
 (defcustom prettier-mode-sync-config-flag t
@@ -103,8 +105,9 @@ When nil, send errors to the default error buffer."
   :package-version '(prettier . "0.1.0")
   :group 'prettier
   :link '(info-link "(prettier)prettier-mode-sync-config-flag")
-  :link `(url ,(prettier--readme-link
-                "prettier-mode-sync-config-flag")))
+  :link `(url ,(eval-when-compile
+                 (prettier--readme-link
+                  "prettier-mode-sync-config-flag"))))
 
 (defcustom prettier-editorconfig-flag t
   "Non-nil means to use .editorconfig files when present.
@@ -114,8 +117,9 @@ Requires Prettier 1.9+."
   :package-version '(prettier . "0.1.0")
   :group 'prettier
   :link '(info-link "(prettier)prettier-editorconfig-flag")
-  :link `(url ,(prettier--readme-link
-                "prettier-editorconfig-flag")))
+  :link `(url ,(eval-when-compile
+                 (prettier--readme-link
+                  "prettier-editorconfig-flag"))))
 
 (defcustom prettier-enabled-parsers '(babylon
                                       css
@@ -158,8 +162,9 @@ or for which you have plugins installed."
   :package-version '(prettier . "0.1.0")
   :group 'prettier
   :link '(info-link "(prettier)prettier-enabled-parsers")
-  :link `(url ,(prettier--readme-link
-                "prettier-enabled-parsers")))
+  :link `(url ,(eval-when-compile
+                 (prettier--readme-link
+                  "prettier-enabled-parsers"))))
 
 (defface prettier-inline-error
   '((t :inherit compilation-error))

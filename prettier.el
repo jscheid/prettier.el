@@ -223,10 +223,10 @@ Other errors are shown inline or in the error buffer.")
       js3-strict-trailing-comma-warning)
      :trailingComma
      (lambda (trailing-comma)
-       (case trailing-comma
+       (pcase trailing-comma
          ("es5" nil)
          ("all" nil)
-         (otherwise 'unchanged))))
+         (_ 'unchanged))))
 
     ;; When prettier has semicolons disabled, don't warn
     ;; about their absence
@@ -234,9 +234,7 @@ Other errors are shown inline or in the error buffer.")
       js3-strict-missing-semi-warning)
      :semi
      (lambda (semi)
-       (case semi
-         (nil nil)
-         (otherwise 'unchanged))))
+       (if semi 'unchanged nil)))
 
     ((web-mode-auto-quote-style)
      :singleQuote

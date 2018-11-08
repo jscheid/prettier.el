@@ -46,9 +46,9 @@ how to configure remote systems.
 
 Use `M-x global-prettier-mode` to turn on the minor mode in all major
 modes supported by your version of Prettier and by any plugins installed
-(see [prettier-mode-enabled-parsers](#prettier-mode-enabled-parsers)
-below.) When enabled, the minor mode will reformat on file save and
-also sync settings from Prettier to Emacs, such as indentation level.
+(see [prettier-enabled-parsers](#prettier-enabled-parsers) below.) When
+enabled, the minor mode will reformat on file save and also sync
+settings from Prettier to Emacs, such as indentation level.
 
 To enable `prettier-mode` globally at startup:
 

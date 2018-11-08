@@ -121,8 +121,9 @@ without any plugins.
 
 ### `prettier-inline-errors-flag`
 
-Set this to `nil` if you don't like syntax errors to be shown inline but
-want them sent to the default error buffer instead.
+Set this to `t` if you want syntax errors to be shown inline instead of
+sending them to the default error buffer. This feature is experimental
+and won't yet work well when the error is outside the window.
 
 ### `prettier-pre-warm`
 
@@ -148,7 +149,7 @@ some on first save.
 
 - `prettier-emacs` doesn't touch your buffer configuration, such as
   indentation offsets. `prettier-mode`, by default, tries to set the
-  buffer configuration to match prettier configuration as closely as
+  buffer configuration to match Prettier configuration as closely as
   possible.
 
 - This package keeps point at the same location relative to your code.

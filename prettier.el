@@ -454,7 +454,7 @@ should be used when filing bug reports."
     (remove-hook 'before-save-hook
                  #'prettier-prettify
                  'local)
-	  (remove-hook 'after-change-major-mode-hook
+    (remove-hook 'after-change-major-mode-hook
                  #'prettier--maybe-sync-config
                  'local)))
 

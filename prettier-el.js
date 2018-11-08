@@ -120,8 +120,8 @@ function getGlobalPrettier() {
   let yarnGlobalPath;
 
   const execSyncOptions = {
-    encoding: "utf-8",
-    stdio: ["ignore", "pipe", "ignore"]
+    ["encoding"]: "utf-8",
+    ["stdio"]: ["ignore", "pipe", "ignore"]
   };
 
   try {

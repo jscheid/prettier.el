@@ -739,7 +739,7 @@ Tries loading the configuration, ignoring failure with a message.
 If loaded successfully, uses it to set a variety of buffer-local
 variables in an effort to make pre-formatting indentation etc as
 close to post-formatting as possible."
-  (condition-case-unless-debug nil
+  (condition-case-unless-debug err
       (setq
        prettier-config-cache
        (plist-get (prettier--load-config) :options)
@@ -774,7 +774,7 @@ close to post-formatting as possible."
     ;; Ignore any errors but print a warning
     ((debug error)
      (message "Could not sync Prettier config, consider setting \
-`prettier-mode-sync-config-flag' to nil"))))
+`prettier-mode-sync-config-flag' to nil: %S" err))))
 
 (defun prettier--restore-config ()
   "Reset all local variables set by prettier--sync-config.

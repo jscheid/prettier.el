@@ -7,7 +7,7 @@
 ;; Created: 7 Nov 2018
 ;; Keywords: convenience, languages, files
 ;; Homepage: https://github.com/jscheid/prettier.el
-;; Dependencies: ((emacs "24.1") (nvm "20171217.1636"))
+;; Package-Requires: ((emacs "24.4") (nvm "0.2"))
 
 ;; This file is not part of GNU Emacs.
 

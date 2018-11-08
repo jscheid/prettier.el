@@ -995,31 +995,32 @@ The result is the path to the `node' executable in the highest
 install stable (even) node version, with minimum major version 6,
 or nil when no node versions matching this criteria are installed
 via nvm or when nvm itself is not installed."
-  (when (fboundp #'nvm--installed-versions)
-    (let* ((versions
-            (mapcar
-             (lambda (version)
-               (cons (mapcar
-                      #'string-to-number
-                      (cdr (split-string (car version) "[v.]+")))
-                     (cdr version)))
-             (nvm--installed-versions)))
-           (node-dir
-            (cadar
-             (last
-              (cl-sort
-               (seq-filter
-                (lambda (v)
-                  (let ((major (caar v)))
-                    (and (zerop (% major 2)) (>= major 6))))
-                versions)
-               #'version-list-< :key #'car))))
-           (node-command
-            (when node-dir
-              (concat (file-name-as-directory node-dir)
-                      "bin/node"))))
-      (when (file-executable-p node-command)
-        node-command))))
+  (ignore-errors
+    (when (fboundp #'nvm--installed-versions)
+      (let* ((versions
+              (mapcar
+               (lambda (version)
+                 (cons (mapcar
+                        #'string-to-number
+                        (cdr (split-string (car version) "[v.]+")))
+                       (cdr version)))
+               (nvm--installed-versions)))
+             (node-dir
+              (cadar
+               (last
+                (cl-sort
+                 (seq-filter
+                  (lambda (v)
+                    (let ((major (caar v)))
+                      (and (zerop (% major 2)) (>= major 6))))
+                  versions)
+                 #'version-list-< :key #'car))))
+             (node-command
+              (when node-dir
+                (concat (file-name-as-directory node-dir)
+                        "bin/node"))))
+        (when (file-executable-p node-command)
+          node-command)))))
 
 (defun prettier--find-node (server-id)
   "Find the name or path of the node executable to use.

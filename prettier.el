@@ -167,6 +167,20 @@ or for which you have plugins installed."
                  (prettier--readme-link
                   "prettier-enabled-parsers"))))
 
+(defcustom prettier-mode-ignore-buffer-function
+  #'prettier--in-node-modules-p
+  "A function called to selectively ignore certain buffers.
+
+The function should return non-nil if `prettier-mode'
+should not be enabled for the current buffer."
+  :type 'function
+  :package-version '(prettier . "0.2.0")
+  :group 'prettier
+  :link '(info-link "(prettier)prettier-ignore-buffer-function")
+  :link `(url ,(eval-when-compile
+                 (prettier--readme-link
+                  "prettier-ignore-buffer-function"))))
+
 (defface prettier-inline-error
   '((t :inherit compilation-error))
   "Prettier face for errors."
@@ -466,6 +480,8 @@ should be used when filing bug reports."
   (lambda ()
     (when (and buffer-file-name
                (not prettier-mode)
+               (or (null prettier-mode-ignore-buffer-function)
+                   (not (funcall prettier-mode-ignore-buffer-function)))
                (prettier--parser))
       (with-temp-message
           (when (not (eq prettier-pre-warm 'none))
@@ -481,6 +497,10 @@ should be used when filing bug reports."
 
 
 ;;;; Support
+
+(defun prettier--in-node-modules-p ()
+  "Return t if current buffer's file is beneath `node_modules'."
+  (string-match "/node_modules/" buffer-file-name))
 
 (defun prettier--read-parser ()
   "Read a Prettier parser from the minibuffer.

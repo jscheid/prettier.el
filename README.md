@@ -136,6 +136,14 @@ wait when `prettier-mode` is first activated.
 `some` is a compromise, with it you wait some on first activation and
 some on first save.
 
+### `prettier-mode-ignore-buffer-function`
+
+This function is called in every buffer that `prettier-mode`
+supports. If it returns non-nil, the buffer is ignored and
+`prettier-mode` won't be activated for it. The default is to ignore
+buffers for files nested beneath a `node_modules` directory. You can set
+this to `nil` and no buffers will be ignored.
+
 ## Differences from `prettier-emacs`
 
 - `prettier-emacs` launches Prettier in an external process, paying

@@ -318,9 +318,19 @@ touched.")
     (python-mode . (python))
     (php-mode . (php))
     (sql-mode . (postgresql))
-    (swift-mode . (swift))
-    (web-mode . (parse5)))
+    (swift-mode . (swift)))
   "Map from major mode to Prettier parsers.")
+
+(defconst prettier-web-mode-part-parsers
+  '((nil . (parse5))
+    (javascript . (babylon flow))
+    (jsx . (babylon flow))
+    (css . (css))
+    (json . (json json5))
+    (markdown . (markdown remark))
+    (ruby . (ruby))
+    (sql . (postgresql)))
+  "Map from web-mode part identifier to Prettier parsers.")
 
 
 ;;;; Variables
@@ -1071,9 +1081,12 @@ for derived modes.)"
 The mode's parents are searched recursively when there are no
 parsers configured for it and it is a derived mode."
   (when mode
-    (or (cdr (assoc mode prettier-major-mode-parsers))
-        (prettier--parser-for-mode
-         (get mode 'derived-mode-parent)))))
+    (or  (when (eq mode 'web-mode)
+           (cdr (assoc (get-text-property 1 'part-side)
+                       prettier-web-mode-part-parsers)))
+         (cdr (assoc mode prettier-major-mode-parsers))
+         (prettier--parser-for-mode
+          (get mode 'derived-mode-parent)))))
 
 (defun prettier--local-file-name ()
   "Return the buffer's local filename."

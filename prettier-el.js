@@ -326,7 +326,9 @@ function getPrettierForPath(filepath) {
       const result = prettier.formatWithCursor(body, options);
       const timeAfterFormat = Date.now();
       const diffResult = diff(body, result["formatted"], undefined);
-      const out = [createResponseHeader("C", result["cursorOffset"])];
+      const out = Number.isFinite(result["cursorOffset"])
+        ? [createResponseHeader("C", result["cursorOffset"])]
+        : [];
 
       out.push(createResponseHeader("T", timeBeforeFormat));
       out.push(createResponseHeader("T", timeAfterFormat));

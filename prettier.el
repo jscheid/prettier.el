@@ -928,9 +928,11 @@ PROCESS-BUF is the process buffer."
          (prettier-process (prettier--get-process))
          (start-point (copy-marker (or start (point-min)) nil))
          (end-point (copy-marker (or end (point-max)) t))
-         (relative-point (and (>= (point) start-point)
-                              (<= (point) end-point)
-                              (- (point) start-point -1)))
+         (point-before (point))
+         (point-end-p (eq point-before (point-max)))
+         (relative-point (and (>= point-before start-point)
+                              (<= point-before end-point)
+                              (- point-before start-point -1)))
          (filename (prettier--local-file-name))
          (tempfile (make-temp-file "prettier-emacs."))
          any-errors
@@ -994,9 +996,12 @@ PROCESS-BUF is the process buffer."
                             (base64-decode-region 1 (point))
                             (buffer-string))))
 
-                        ((eq kind ?C) (when relative-point
-                                        (throw 'set-cursor
-                                               (cdr command)))))))))
+                        ((eq kind ?C)
+                         (when relative-point
+                           (throw 'set-cursor
+                                  (if point-end-p
+                                      (point-max)
+                                    (cdr command))))))))))
                (point)))))
           (unless any-errors
             (prettier--clear-errors)

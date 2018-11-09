@@ -1,3 +1,5 @@
+PANDOC := ${HOME}/.local/bin/pandoc
+
 package: README COPYING COPYING-fast-diff prettier-pkg.el prettier.el prettier-el.js.gz.base64 bootstrap-min.js dir prettier.info
 	$(eval VERSION := $(shell emacs -batch --eval='(progn (require '"'"'package) (find-file "prettier.el") (princ (package-version-join (package-desc-version (package-buffer-info)))))'))
 	env COPYFILE_DISABLE=true gtar --transform 's,^,prettier-${VERSION}/,' -cf prettier-$(VERSION).tar $^
@@ -10,10 +12,10 @@ prettier.info: prettier.texi
 	makeinfo --no-validate --force $< -o $@
 
 prettier.texi: README.md metadata.yaml build-tools/ghm-to-texi.py
-	pandoc metadata.yaml $< -s --filter ./build-tools/ghm-to-texi.py -o $@
+	${PANDOC} metadata.yaml $< -s --filter ./build-tools/ghm-to-texi.py -o $@
 
 README: README.md build-tools/ghm-to-md.py
-	pandoc $< -f gfm -s -t markdown_strict --filter ./build-tools/ghm-to-md.py -o $@
+	${PANDOC} $< -f gfm -s -t markdown_strict --filter ./build-tools/ghm-to-md.py -o $@
 
 prettier-pkg.el: prettier.el build-tools/create-pkg-el.el
 	emacs -batch -l ./build-tools/create-pkg-el.el

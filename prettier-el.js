@@ -387,8 +387,6 @@ function getPrettierForPath(filepath) {
       const options = prettier.resolveConfig.sync(filepath) || {};
       let optionsStr;
 
-      const nodeMajorVersion = process.versions.node;
-
       options["parser"] = function(_text, _parsers, options) {
         optionsStr = JSON.stringify({
           ["versions"]: Object.assign({}, process["versions"], {

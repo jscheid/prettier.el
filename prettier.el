@@ -422,6 +422,17 @@ With prefix, ask for the parser to use"
            prettier-processes)
   (clrhash prettier-processes))
 
+(defun prettier--buffer-remote-p (&optional identification connected)
+  "Return `file-remote-p' result for the current buffer.
+
+IDENTIFICATION and CONNECTED have the same meaning as
+`file-remote-p'."
+  (and buffer-file-name
+       (apply #'file-remote-p
+              buffer-file-name
+              identification
+              connected)))
+
 (defun prettier-info ()
   "Show a temporary buffer with diagnostic info.
 
@@ -433,7 +444,7 @@ should be used when filing bug reports."
           :emacs-version (emacs-version)
           :prettier-el-version prettier-el-version
           :buffer-file-name buffer-file-name
-          :remote-id (file-remote-p buffer-file-name)
+          :remote-id (prettier--buffer-remote-p)
           :major-mode major-mode
           :exec-path exec-path
           :env process-environment
@@ -583,7 +594,7 @@ Additional considerations were:
   startup time via `tramp' on slow, non-compressed connections."
   (let* ((buf (get-buffer-create
                (format "*prettier %s*"
-                       (or (file-remote-p buffer-file-name 'host)
+                       (or (prettier--buffer-remote-p 'host)
                            "(local)"))))
          (payload
           (with-temp-buffer
@@ -655,7 +666,7 @@ current file.
 If there is already a sub-process running on the host (local or
 remote) corresponding to the current buffer, return that;
 otherwise, launch a new one."
-  (let* ((server-id (or (file-remote-p buffer-file-name)
+  (let* ((server-id (or (prettier--buffer-remote-p)
                         'local))
          (existing-process
           (gethash server-id prettier-processes))
@@ -1095,7 +1106,7 @@ parsers configured for it and it is a derived mode."
 
 (defun prettier--local-file-name ()
   "Return the buffer's local filename."
-  (or (file-remote-p buffer-file-name 'localname)
+  (or (prettier--buffer-remote-p 'localname)
       buffer-file-name))
 
 

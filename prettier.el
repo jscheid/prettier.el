@@ -269,16 +269,15 @@ Other errors are shown inline or in the error buffer.")
      nil))
   "Settings to sync from Prettier to Emacs configuration.
 
-A list with element a list of two or three elements:
+A list of lists of two or three elements:
 
   `(VAR-LIST SOURCE-CONFIG [TRANSFORM-FN])'
 
 VAR-LIST is a list of Emacs variables to set.
 
-SOURCE-CONFIG is either a keyword specifying which Prettier
-configuration option to use for setting the Emacs variables, or -
-when not a keyword - gives a static value to set the variables
-to.
+SOURCE-CONFIG is either a keyword that specifies which Prettier
+configuration option to use for setting the Emacs variables, or
+- when not a keyword - a static value to set the variables to.
 
 TRANSFORM-FN is an optional function; when present, it is called
 with the value of the Prettier option and the result is used for

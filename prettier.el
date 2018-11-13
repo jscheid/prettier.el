@@ -696,7 +696,7 @@ otherwise, launch a new one."
           (when prettier-show-benchmark-flag
             (prettier--delayed-message
              "Prettier process preparation for %s took %.1fms"
-             buffer-file-name
+             (prettier--local-file-name)
              (* 1000 (float-time (time-subtract (current-time)
                                                 start-time))))))))))
 
@@ -963,7 +963,7 @@ PROCESS-BUF is the process buffer."
             (if strip-trailing-p "S" "s")
             (if prettier-editorconfig-flag "E" "e")
             filename
-            "\n" (if parser (symbol-name parser) "")
+            "\n" (if parser (symbol-name parser) "-")
             "\n" (format "%X" (or relative-point 1))
             "\n" tempfile
             "\n\n")
@@ -1107,7 +1107,8 @@ parsers configured for it and it is a derived mode."
 (defun prettier--local-file-name ()
   "Return the buffer's local filename."
   (or (prettier--buffer-remote-p 'localname)
-      buffer-file-name))
+      buffer-file-name
+      (concat "(unsaved)" (buffer-name))))
 
 
 ;;;; Integration with other packages

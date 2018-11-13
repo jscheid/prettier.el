@@ -217,6 +217,9 @@ function getPrettierForDirectory(directory) {
  * @return {!PrettierAPI} The Prettier package found.
  */
 function getPrettierForPath(filepath) {
+  if (!path["isAbsolute"](filepath)) {
+    return getGlobalPrettier();
+  }
   let prettierPath = prettierCache.get(filepath);
   if (!prettierPath) {
     const directory = path["dirname"](filepath);
@@ -262,9 +265,11 @@ function getPrettierForPath(filepath) {
       const editorconfig = packet[1] === "E".charCodeAt(0);
       const filepath = packet.toString("utf-8", 2, newlineIndex1);
       const prettier = getPrettierForPath(filepath);
-      prettier.resolveConfig.sync(filepath, {
-        editorconfig
-      });
+      if (filepath.length > 0) {
+        prettier.resolveConfig.sync(filepath, {
+          editorconfig
+        });
+      }
     } catch (e) {
       // ignore this -- the client isn't waiting for our response and
       // we have nowhere else to report it.
@@ -310,16 +315,19 @@ function getPrettierForPath(filepath) {
 
       const timeBeforeFormat = Date.now();
 
-      const options =
-        prettier.resolveConfig.sync(filepath, {
-          editorconfig
-        }) || {};
+      let options = {};
+      if (path["isAbsolute"](filepath)) {
+        options =
+          prettier.resolveConfig.sync(filepath, {
+            editorconfig
+          }) || {};
+      }
 
       options["cursorOffset"] = cursorOffset;
       options["filepath"] = filepath;
       options["rangeStart"] = undefined;
       options["rangeEnd"] = undefined;
-      if (parser.length > 0) {
+      if (parser !== "-") {
         options["parser"] = parser;
       }
 

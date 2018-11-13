@@ -3,7 +3,7 @@
 ;; Copyright (c) 2018-present Julian Scheid
 
 ;; Author: Julian Scheid <julians37@gmail.com>
-;; Version: 0.2.3
+;; Version: 0.3.0
 ;; Created: 7 Nov 2018
 ;; Keywords: convenience, languages, files
 ;; Homepage: https://github.com/jscheid/prettier.el

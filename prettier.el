@@ -498,8 +498,7 @@ should be used when filing bug reports."
   global-prettier-mode
   prettier-mode
   (lambda ()
-    (when (and buffer-file-name
-               (not prettier-mode)
+    (when (and (not prettier-mode)
                (or (null prettier-mode-ignore-buffer-function)
                    (not (funcall prettier-mode-ignore-buffer-function)))
                (prettier--parser))
@@ -520,7 +519,8 @@ should be used when filing bug reports."
 
 (defun prettier--in-node-modules-p ()
   "Return t if current buffer's file is beneath `node_modules'."
-  (string-match "/node_modules/" buffer-file-name))
+  (and buffer-file-name
+       (string-match "/node_modules/" buffer-file-name)))
 
 (defun prettier--read-parser ()
   "Read a Prettier parser from the minibuffer.

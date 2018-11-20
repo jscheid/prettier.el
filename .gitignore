@@ -9,3 +9,4 @@
 *.elc
 *-pkg.el
 dir
+COPYING-diff-match-patch

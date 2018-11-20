@@ -230,7 +230,7 @@ function getPrettierForPath(filepath) {
 }
 
 /** @suppress {uselessCode} */ (baseScript, cacheFilename, inp) => {
-  const diff = require("./node_modules/fast-diff/diff.js");
+  const diff = require("./node_modules/diff-match-patch/index.js");
 
   /**
    * Write an error response item.
@@ -333,10 +333,10 @@ function getPrettierForPath(filepath) {
 
       const result = prettier.formatWithCursor(body, options);
       const timeAfterFormat = Date.now();
-      const diffResult = diff(body, result["formatted"], undefined);
       const out = Number.isFinite(result["cursorOffset"])
         ? [createResponseHeader("C", result["cursorOffset"])]
         : [];
+      const diffResult = new diff().diff_main(body, result["formatted"]);
 
       out.push(createResponseHeader("T", timeBeforeFormat));
       out.push(createResponseHeader("T", timeAfterFormat));

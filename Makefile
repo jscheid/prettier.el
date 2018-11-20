@@ -1,8 +1,11 @@
 PANDOC := ${HOME}/.local/bin/pandoc
 
-package: README COPYING COPYING-fast-diff prettier-pkg.el prettier.el prettier-el.js.gz.base64 bootstrap-min.js dir prettier.info
+package: README COPYING COPYING-diff-match-patch prettier-pkg.el prettier.el prettier-el.js.gz.base64 bootstrap-min.js dir prettier.info
 	$(eval VERSION := $(shell emacs -batch --eval='(progn (require '"'"'package) (find-file "prettier.el") (princ (package-version-join (package-desc-version (package-buffer-info)))))'))
 	env COPYFILE_DISABLE=true gtar --transform 's,^,prettier-${VERSION}/,' -cf prettier-$(VERSION).tar $^
+
+COPYING-diff-match-patch: node_modules/diff-match-patch/LICENSE
+	cp $^ $@
 
 dir: prettier.info
 	rm -f $@
@@ -28,9 +31,9 @@ prettier-el-min.js: prettier-el.js externs.js
 		--compilation_level=ADVANCED_OPTIMIZATIONS \
 		--js \
 		prettier-el.js \
-		node_modules/fast-diff/diff.js \
+		node_modules/diff-match-patch/index.js \
 		--externs externs.js \
-		--hide_warnings_for=node_modules/fast-diff \
+		--hide_warnings_for=node_modules/diff-match-patch \
 		--dependency_mode=NONE
 
 bootstrap-min.js: bootstrap.js externs.js

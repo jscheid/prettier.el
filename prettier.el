@@ -7,7 +7,7 @@
 ;; Created: 7 Nov 2018
 ;; Keywords: convenience, languages, files
 ;; Homepage: https://github.com/jscheid/prettier.el
-;; Package-Requires: ((emacs "24.4") (nvm "0.2"))
+;; Package-Requires: ((emacs "24.4") (iter2 "0.9") (nvm "0.2"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -39,6 +39,7 @@
 
 ;;;; Requirements
 
+(require 'iter2)
 (require 'json)
 (require 'nvm)
 (require 'tramp)
@@ -500,7 +501,8 @@ should be used when filing bug reports."
   (lambda ()
     (when (and (not prettier-mode)
                (or (null prettier-mode-ignore-buffer-function)
-                   (not (funcall prettier-mode-ignore-buffer-function)))
+                   (not (funcall
+                         prettier-mode-ignore-buffer-function)))
                (prettier--parser))
       (with-temp-message
           (when (not (eq prettier-pre-warm 'none))
@@ -604,7 +606,9 @@ Additional considerations were:
          (node-command (prettier--find-node server-id))
          (new-process
           (progn
-            (with-current-buffer buf (erase-buffer))
+            (with-current-buffer buf
+              (erase-buffer)
+              (setq buffer-undo-list t))
             (start-file-process
              "prettier"
              buf
@@ -684,13 +688,14 @@ otherwise, launch a new one."
                         (prettier--create-process server-id)
                         prettier-processes))))
               (when warmup-p
-                (prettier--request
+                (prettier--request-iter
                  process
                  (list
                   "w"
                   (if prettier-editorconfig-flag "E" "e")
                   (prettier--local-file-name)
-                  "\n\n")))
+                  "\n\n")
+                 t))
               process)
           (when prettier-show-benchmark-flag
             (prettier--delayed-message
@@ -838,73 +843,90 @@ Don't touch variables that have changed since config was synced."
   (kill-local-variable prettier-js-previous-local-settings)
   (kill-local-variable prettier-prettier-config-cache))
 
-(defun prettier--request (prettier-process request &optional callback)
-  "Send REQUEST to PRETTIER-PROCESS, call CALLBACK with response.
-
-When CALLBACK is nil, fire and forget."
-  (let* ((p (point-min))
-         (buf (process-buffer prettier-process))
-         message)
-    (process-send-string prettier-process (apply #'concat request))
-    (when callback
-      (catch 'end-of-message
-        (with-current-buffer buf
-          (while t
-            (while
-                (null
-                 (save-excursion
-                   (goto-char p)
-                   (when (looking-at
-                          "\\([CDEIOMTZ]\\)\\([[:xdigit:]]+\\)\n")
-                     (let* ((m (match-end 0))
-                            (kind (string-to-char (match-string 1)))
-                            (len (string-to-number (match-string 2)
-                                                   16)))
-                       (cond
-                        ((eq kind ?Z)
-                         (setq p m)
-                         (throw 'end-of-message nil))
-                        ((member kind '(?I ?O ?E))
-                         (when (<= (+ m len) (point-max))
-                           (push (cons kind (list m (+ m len)))
-                                 message)
-                           (setq p (+ m len 1))))
-                        (t (setq p m)
-                           (push (cons kind len) message)))))))
-              (tramp-accept-process-output prettier-process 10)
-              (when (eq (process-status prettier-process) 'exit)
-                (error "Node sub-process died"))))))
-      (unwind-protect
-          (funcall callback message buf)
-        (with-current-buffer buf
-          (delete-region 1 p))))))
+(iter2-defun prettier--request-iter (prettier-process
+                                     request
+                                     &optional fire-and-forget-p)
+  "Send REQUEST to PRETTIER-PROCESS, yield commands."
+  (condition-case err
+      (let* ((p (point-min))
+             (buf (process-buffer prettier-process)))
+        (process-send-string prettier-process
+                             (apply #'concat request))
+        (unless fire-and-forget-p
+          (unwind-protect
+              (catch 'end-of-message
+                (with-current-buffer buf
+                  (while t
+                    (while
+                        (null
+                         (save-excursion
+                           (goto-char p)
+                           (when
+                               (looking-at
+                                "\\([CDEIOMTZ]\\)\\([[:xdigit:]]+\\)\n")
+                             (let* ((m (match-end 0))
+                                    (kind (string-to-char
+                                           (match-string 1)))
+                                    (len (string-to-number
+                                          (match-string 2)
+                                          16)))
+                               (cond
+                                ((eq kind ?Z)
+                                 (setq p m)
+                                 (throw 'end-of-message nil))
+                                ((member kind '(?I ?O ?E))
+                                 (when (<= (+ m len) (point-max))
+                                   (iter-yield
+                                    (cons kind (list m (+ m len))))
+                                   (setq p (+ m len 1))))
+                                (t (setq p m)
+                                   (iter-yield (cons kind len))
+                                   t))))))
+                      (tramp-accept-process-output prettier-process
+                                                   10)
+                      (when (eq (process-status prettier-process)
+                                'exit)
+                        (error "Node sub-process died"))))))
+            (with-current-buffer buf
+              (delete-region 1 p)))))
+    ((quit error)
+     ;; FIXME: need more efficient recovery from quit
+     (quit-process prettier-process)
+     (signal (car err) (cdr err)))))
 
 (defun prettier--load-config ()
   "Load prettier config for current buffer."
   (let* ((start-time (current-time))
-         (prettier-process (prettier--get-process)))
-    (prettier--request
-     prettier-process
-     (list "o" (prettier--local-file-name)
-           "\n\n")
-     (lambda (message process-buf)
-       (if (eq (caar message) ?O)
-           (let* ((json-object-type 'plist)
-                  (json-false nil)
-                  (config
-                   (json-read-from-string
-                    (base64-decode-string
-                     (with-current-buffer process-buf
-                       (buffer-substring-no-properties
-                        (nth 0 (cdar message))
-                        (nth 1 (cdar message))))))))
-             (when prettier-show-benchmark-flag
-               (message
-                "Prettier load-config took %.1fms"
-                (* 1000
-                   (float-time (time-subtract (current-time)
-                                              start-time)))))
-             config))))))
+         (prettier-process (prettier--get-process))
+         (process-buf (process-buffer prettier-process))
+         (iter (prettier--request-iter
+                prettier-process
+                (list "o" (prettier--local-file-name)
+                      "\n\n")))
+         config)
+    (unwind-protect
+        (progn
+          (iter-do (command iter)
+            (if (eq (car command) ?O)
+                 (let* ((json-object-type 'plist)
+                        (json-false nil))
+                   (setq
+                    config
+                    (json-read-from-string
+                     (base64-decode-string
+                      (with-current-buffer process-buf
+                        (buffer-substring-no-properties
+                         (nth 1 command)
+                         (nth 2 command)))))))))
+          (when prettier-show-benchmark-flag
+            (message
+             "Prettier load-config took %.1fms"
+             (* 1000
+                (float-time (time-subtract (current-time)
+                                           start-time)))))
+
+          config)
+      (iter-close iter))))
 
 (defun prettier--default-callback (message process-buf)
   "Default response callback.
@@ -936,6 +958,7 @@ PROCESS-BUF is the process buffer."
   "Format the current buffer from START to END with PARSER."
   (let* ((start-time (current-time))
          (prettier-process (prettier--get-process))
+         (process-buf (process-buffer prettier-process))
          (start-point (copy-marker (or start (point-min)) nil))
          (end-point (copy-marker (or end (point-max)) t))
          (point-before (point))
@@ -945,8 +968,21 @@ PROCESS-BUF is the process buffer."
                               (- point-before start-point -1)))
          (filename (prettier--local-file-name))
          (tempfile (make-temp-file "prettier-emacs."))
+         result-point
          any-errors
-         timestamps)
+         timestamps
+         (buffer-undo-list-backup buffer-undo-list)
+         (iter (prettier--request-iter
+                prettier-process
+                (list
+                 "f"
+                 (if strip-trailing-p "S" "s")
+                 (if prettier-editorconfig-flag "E" "e")
+                 filename
+                 "\n" (if parser (symbol-name parser) "-")
+                 "\n" (format "%X" (or relative-point 1))
+                 "\n" tempfile
+                 "\n\n"))))
     (unwind-protect
         (when (< start-point end-point)
           (let ((write-region-inhibit-fsync t)
@@ -955,66 +991,64 @@ PROCESS-BUF is the process buffer."
                           end-point
                           tempfile
                           nil 'no-visit nil nil))
-          (prettier--request
-           prettier-process
-           (list
-            "f"
-            (if strip-trailing-p "S" "s")
-            (if prettier-editorconfig-flag "E" "e")
-            filename
-            "\n" (if parser (symbol-name parser) "-")
-            "\n" (format "%X" (or relative-point 1))
-            "\n" tempfile
-            "\n\n")
-           (lambda (message process-buf)
-             (goto-char
-              (or
-               (catch 'set-cursor
-                 (save-excursion
-                   (widen)
-                   (goto-char start-point)
-                   (dolist (command message)
-                     (let ((kind (car command)))
-                       (cond
+          (condition-case err
+              (save-excursion
+                (widen)
+                (goto-char start-point)
 
-                        ((eq kind ?M)
-                         (forward-char (cdr command)))
+                (iter-do (command iter)
+                  (let ((kind (car command)))
+                    (cond
+                     ((eq kind ?M)
+                      (forward-char (cdr command)))
 
-                        ((eq kind ?I)
-                         (insert (base64-decode-string
-                                  (with-current-buffer process-buf
-                                    (buffer-substring-no-properties
-                                     (nth 0 (cdr command))
-                                     (nth 1 (cdr command)))))))
+                     ((eq kind ?I)
+                      (insert (base64-decode-string
+                               (with-current-buffer process-buf
+                                 (buffer-substring-no-properties
+                                  (nth 0 (cdr command))
+                                  (nth 1 (cdr command)))))))
 
-                        ((eq kind ?D)
-                         (delete-region (point)
-                                        (+ (point) (cdr command))))
+                     ((eq kind ?D)
+                      (delete-region (point)
+                                     (+ (point) (cdr command))))
 
-                        ((eq kind ?T)
-                         (push (/ (cdr command) 1000.0) timestamps))
+                     ((eq kind ?T)
+                      (push (/ (cdr command) 1000.0) timestamps))
 
-                        ((eq kind ?E)
-                         (setq any-errors t)
-                         (prettier--show-remote-error
-                          filename
-                          (with-temp-buffer
-                            (insert (with-current-buffer process-buf
-                                      (buffer-substring-no-properties
-                                       (nth 0 (cdr command))
-                                       (nth 1 (cdr command)))))
-                            (base64-decode-region 1 (point))
-                            (buffer-string))))
+                     ((eq kind ?E)
+                      (setq any-errors t)
+                      (prettier--show-remote-error
+                       filename
+                       (with-temp-buffer
+                         (insert (with-current-buffer process-buf
+                                   (buffer-substring-no-properties
+                                    (nth 0 (cdr command))
+                                    (nth 1 (cdr command)))))
+                         (base64-decode-region 1 (point))
+                         (buffer-string))))
 
-                        ((eq kind ?C)
-                         (when relative-point
-                           (throw 'set-cursor
-                                  (if point-end-p
-                                      (point-max)
-                                    (cdr command))))))))))
-               (point)))))
+                     ((eq kind ?C)
+                      (when relative-point
+                        (setq result-point
+                              (if point-end-p
+                                  (point-max)
+                                (cdr command)))))))))
+            ((quit error)
+             (ignore-errors
+               (setq any-errors t)
+               (let ((buffer-undo-list t))
+                 (erase-buffer)
+                 (let ((coding-system-for-read 'utf-8-unix))
+                   (insert-file-contents tempfile))
+                 (setq buffer-undo-list buffer-undo-list-backup)
+                 (goto-char point-before)))
+             (signal (car err) (cdr err))))
+
           (unless any-errors
             (prettier--clear-errors)
+            (when result-point
+              (goto-char result-point))
             (when indent-str
               (save-excursion
                 (goto-char start-point)
@@ -1033,6 +1067,7 @@ PROCESS-BUF is the process buffer."
                "Prettier format took %.1fms + %.1fms"
                (* prettier 1000)
                (* (- total prettier) 1000)))))
+      (iter-close iter)
       (delete-file tempfile))))
 
 (defun prettier--node-from-nvm ()

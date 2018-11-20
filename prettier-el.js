@@ -332,16 +332,13 @@ function getPrettierForPath(filepath) {
       }
 
       const result = prettier.formatWithCursor(body, options);
+
       const timeAfterFormat = Date.now();
-      const out = Number.isFinite(result["cursorOffset"])
-        ? [createResponseHeader("C", result["cursorOffset"])]
-        : [];
       const diffResult = new diff().diff_main(body, result["formatted"]);
 
-      out.push(createResponseHeader("T", timeBeforeFormat));
-      out.push(createResponseHeader("T", timeAfterFormat));
+      const out = [];
 
-      for (let index = diffResult.length - 1; index >= 0; --index) {
+      for (let index = 0; index < diffResult.length; index++) {
         const [kind, str] = diffResult[index];
         switch (kind) {
           case 1:
@@ -368,6 +365,12 @@ function getPrettierForPath(filepath) {
               out.push(createResponseHeader("M", str.length));
             }
         }
+      }
+      out.push(createResponseHeader("T", timeAfterFormat));
+      out.push(createResponseHeader("T", timeBeforeFormat));
+
+      if (Number.isFinite(result["cursorOffset"])) {
+        out.push(createResponseHeader("C", result["cursorOffset"]));
       }
       out.push(Z);
       process.stdout.write(Buffer.concat(out));

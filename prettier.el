@@ -727,6 +727,7 @@ separate window."
         (erase-buffer)
         (insert (apply #'format string objects)))
       (compilation-mode)
+      (setq-local compilation-error-screen-columns nil)
       (display-buffer errbuf))))
 
 (defun prettier--show-remote-error (filename error-msg)

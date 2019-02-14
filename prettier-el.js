@@ -34,6 +34,8 @@ const prettierCache = new Map();
 const Z = createResponseHeader("Z", 0);
 const newline = Buffer.from("\n");
 
+const otherParserName = new Map([["babylon", "babel"], ["babel", "babylon"]]);
+
 /** @type{PrettierAPI} */
 let globalPrettier;
 
@@ -229,6 +231,36 @@ function getPrettierForPath(filepath) {
   return prettierPath;
 }
 
+function parseParsers(parsersString) {
+  return parsersString === "-"
+    ? null
+    : parsersString
+        .split(",")
+        .reduce(
+          (accu, parser) =>
+            accu.concat(parser === "babel" ? ["babel", "babylon"] : [parser]),
+          []
+        );
+}
+
+function bestParser(prettier, parsers, options, filepath) {
+  if (parsers !== null) {
+    const supportedParsers = prettier.getSupportInfo
+      ? prettier
+          .getSupportInfo()
+          ["languages"].reduce((accu, lang) => accu.concat(lang["parsers"]), [])
+      : [];
+    const result = parsers.find(parser => supportedParsers.includes(parser));
+    if (result) {
+      return result;
+    }
+  }
+  if (filepath) {
+    return prettier["getFileInfo"].sync(filepath, null)["inferredParser"];
+  }
+  return null;
+}
+
 /** @suppress {uselessCode} */ (baseScript, cacheFilename, inp) => {
   const diff = require("./node_modules/diff-match-patch/index.js");
 
@@ -284,17 +316,22 @@ function getPrettierForPath(filepath) {
   function handleFormat(packet) {
     const stripTrailing = packet[1] === "S".charCodeAt(0);
     const editorconfig = packet[2] === "E".charCodeAt(0);
+    const inferParser = packet[3] === "I".charCodeAt(0);
     const newlineIndex1 = packet.indexOf(10);
     if (newlineIndex1 < 0) {
       protocolError();
     }
-    const filepath = packet.toString("utf-8", 3, newlineIndex1);
+    const filepath = packet.toString("utf-8", 4, newlineIndex1);
     const newlineIndex2 = packet.indexOf(10, newlineIndex1 + 1);
     if (newlineIndex2 < 0) {
       protocolError();
     }
 
-    const parser = packet.toString("utf-8", newlineIndex1 + 1, newlineIndex2);
+    const parsersString = packet.toString(
+      "utf-8",
+      newlineIndex1 + 1,
+      newlineIndex2
+    );
     const newlineIndex3 = packet.indexOf(10, newlineIndex2 + 1);
     if (newlineIndex3 < 0) {
       protocolError();
@@ -323,20 +360,41 @@ function getPrettierForPath(filepath) {
           }) || {};
       }
 
+      const parsers = parseParsers(parsersString);
+      const parser = bestParser(
+        prettier,
+        parsers,
+        options,
+        inferParser ? filepath : null
+      );
+
+      const out = [];
+
+      const prettierVersion = createBase64Buffer(prettier.version);
+      const parserBuf = createBase64Buffer(parser || "none");
+      out.push(createResponseHeader("P", parserBuf.length), parserBuf, newline);
+      out.push(
+        createResponseHeader("V", prettierVersion.length),
+        prettierVersion,
+        newline
+      );
+
+      if (inferParser && !parser) {
+        out.push(Z);
+        process.stdout.write(Buffer.concat(out));
+        return;
+      }
+
       options["cursorOffset"] = cursorOffset;
       options["filepath"] = filepath;
       options["rangeStart"] = undefined;
       options["rangeEnd"] = undefined;
-      if (parser !== "-") {
-        options["parser"] = parser;
-      }
+      options["parser"] = parser;
 
       const result = prettier.formatWithCursor(body, options);
 
       const timeAfterFormat = Date.now();
       const diffResult = new diff().diff_main(body, result["formatted"]);
-
-      const out = [];
 
       for (let index = 0; index < diffResult.length; index++) {
         const [kind, str] = diffResult[index];
@@ -395,17 +453,34 @@ function getPrettierForPath(filepath) {
    */
   function handleOptions(packet) {
     try {
-      const filepath = packet.toString("utf-8", 1);
-      const prettier = getPrettierForPath(filepath);
-      const options = prettier.resolveConfig.sync(filepath) || {};
-      let optionsStr;
+      const newlineIndex1 = packet.indexOf(10);
+      if (newlineIndex1 < 0) {
+        protocolError();
+      }
+      const editorconfig = packet[1] === "E".charCodeAt(0);
+      const inferParser = packet[2] === "I".charCodeAt(0);
+      const filepath = packet.toString("utf-8", 3, newlineIndex1);
+      const parsersString = packet.toString("utf-8", newlineIndex1 + 1);
+      const parsers = parseParsers(parsersString);
 
+      const prettier = getPrettierForPath(filepath);
+
+      const options =
+        prettier.resolveConfig.sync(filepath, { editorconfig }) || {};
+
+      let optionsStr;
       options["parser"] = function(_text, _parsers, options) {
         optionsStr = JSON.stringify({
           ["versions"]: Object.assign({}, process["versions"], {
             ["prettier"]: prettier.version
           }),
-          ["options"]: options
+          ["options"]: options,
+          ["bestParser"]: bestParser(
+            prettier,
+            parsers,
+            options,
+            inferParser ? filepath : null
+          )
         });
         return { type: "NullLiteral" };
       };

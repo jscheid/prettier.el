@@ -17,7 +17,7 @@ function require(name) {}
 /**
  * @interface
  */
-function Buffer() {};
+function Buffer() {}
 
 /**
  * @param {!string} str
@@ -45,7 +45,6 @@ Buffer.prototype.slice = function(ofs, len) {};
 Buffer.prototype.length;
 Buffer.prototype.writeUInt32LE = function(val, ofs) {};
 
-
 /**
  * @interface
  */
@@ -63,5 +62,8 @@ PrettierAPI.prototype.format = function(body, options) {};
  * @return {{formatted: !string}}
  */
 PrettierAPI.prototype.formatWithCursor = function(body, options) {};
+PrettierAPI.prototype.getSupportInfo = function() {};
+PrettierAPI.prototype.getFileInfo = function(filePath, options, callback) {};
+PrettierAPI.prototype.getFileInfo.sync = function(filePath, options) {};
 /** @type {string} */
 PrettierAPI.prototype.version;

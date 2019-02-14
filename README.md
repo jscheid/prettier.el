@@ -113,11 +113,12 @@ files to load options.
 
 ### `prettier-enabled-parsers`
 
-Customize this to match the Prettier version you're using and any
-Prettier plugins you have installed.
+Customize this to disable any parsers you don't want to use.
 
-The default setting assumes that you have a recent version of Prettier
-without any plugins.
+### `prettier-infer-parser-flag`
+
+Set this to `nil` if you don't want Prettier to fall back to inferring
+the parser to use based on the file name and contents.
 
 ### `prettier-inline-errors-flag`
 
@@ -143,6 +144,12 @@ supports. If it returns non-nil, the buffer is ignored and
 `prettier-mode` won't be activated for it. The default is to ignore
 buffers for files nested beneath a `node_modules` directory. You can set
 this to `nil` and no buffers will be ignored.
+
+### `prettier-mode-lighter`
+
+This Sexpr is evaluated as part of the modeline. The default value
+shows the string `Prettier` as well as the Prettier parser and
+Prettier version used for the buffer.
 
 ## Differences from `prettier-emacs`
 

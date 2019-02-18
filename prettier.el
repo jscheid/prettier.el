@@ -1240,8 +1240,11 @@ The mode's parents are searched recursively when there are no
 parsers configured for it and it is a derived mode."
   (when mode
     (or  (when (eq mode 'web-mode)
-           (cdr (assoc (get-text-property 1 'part-side)
-                       prettier-web-mode-part-parsers)))
+           (cdr (assoc
+                 (or (get-text-property 1 'part-side)
+                     (and (web-mode-propertize 1 2)
+                          (get-text-property 1 'part-side)))
+                 prettier-web-mode-part-parsers)))
          (cdr (assoc mode prettier-major-mode-parsers))
          (prettier--parsers-for-mode
           (get mode 'derived-mode-parent)))))

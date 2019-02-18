@@ -352,17 +352,29 @@ touched.")
           (submatch (one-or-more digit))
           ")")))
 
+(defun prettier--babel-or-flow ()
+  "Return which parsers to use in a JavaScript-ish buffer."
+  (if (and (boundp 'flow-minor-mode)
+           flow-minor-mode)
+      '(babel-flow flow babel)
+    '(babel flow babel-flow)))
+
 (defconst prettier-major-mode-parsers
-  '((angular-mode . (angular))
+  `((angular-mode . (angular))
     (html-mode . (html))
-    (js-mode . (babel flow babel-flow))
-    (js2-mode . (babel flow babel-flow))
-    (js3-mode . (babel flow babel-flow))
+    (js-mode . ,#'prettier--babel-or-flow)
+    (js2-mode . ,#'prettier--babel-or-flow)
+    (js3-mode . ,#'prettier--babel-or-flow)
     (typescript-mode . (typescript))
     (css-mode . (css))
     (scss-mode . (scss))
     (less-mode . (less))
-    (json-mode . (json json5 json-stringify))
+    (json-mode . (lambda ()
+                   (if (seq-contains
+                        '("package.json" "package-lock.json" "composer.json")
+                        (file-name-nondirectory buffer-file-name))
+                       '(json-stringify json json5)
+                     '(json json5 json-stringify))))
     (graphql-mode . (graphql))
     (markdown-mode . (markdown))
     (vue-mode . (vue))
@@ -374,12 +386,16 @@ touched.")
     (php-mode . (php))
     (sql-mode . (postgresql))
     (swift-mode . (swift)))
-  "Map from major mode to Prettier parsers.")
+  "Map from major mode to Prettier parsers.
+
+In each element, car is the mode and cdr is either a list of
+parser names as symbols, or a function (without arguments) that,
+when called with buffer current, returns such a list.")
 
 (defconst prettier-web-mode-part-parsers
-  '((nil . (html))
-    (javascript . (babel flow babel-flow))
-    (jsx . (babel flow babel-flow))
+  `((nil . (html))
+    (javascript . ,#'prettier--babel-or-flow)
+    (jsx . ,#'prettier--babel-or-flow)
     (css . (css))
     (json . (json json5))
     (markdown . (markdown))
@@ -610,11 +626,9 @@ Prettier parser name) or nil when nothing was selected."
               "Prettier parser (%s): "
               default)
            "Prettier parser (infer): ")
-         (apply
-          #'append
-          (mapcar
-           #'cdr
-           prettier-major-mode-parsers))    ; collection
+         (mapcar (apply-partially 'nth 3)
+                 (cdr (get 'prettier-enabled-parsers
+                           'custom-type)))  ; collection
          nil                                ; predicate
          nil                                ; require-match
          nil                                ; initial
@@ -1239,15 +1253,21 @@ for derived modes.)"
 The mode's parents are searched recursively when there are no
 parsers configured for it and it is a derived mode."
   (when mode
-    (or  (when (eq mode 'web-mode)
-           (cdr (assoc
-                 (or (get-text-property 1 'part-side)
-                     (and (web-mode-propertize 1 2)
-                          (get-text-property 1 'part-side)))
-                 prettier-web-mode-part-parsers)))
-         (cdr (assoc mode prettier-major-mode-parsers))
-         (prettier--parsers-for-mode
-          (get mode 'derived-mode-parent)))))
+    (or
+     (let ((major-mode-parsers
+            (or (when (eq mode 'web-mode)
+                  (cdr (assoc
+                        (or (get-text-property 1 'part-side)
+                            (and (web-mode-propertize 1 2)
+                                 (get-text-property 1 'part-side)))
+                        prettier-web-mode-part-parsers)))
+                (cdr (assoc mode
+                            prettier-major-mode-parsers)))))
+       (if (functionp major-mode-parsers)
+           (funcall major-mode-parsers)
+         major-mode-parsers))
+     (prettier--parsers-for-mode
+      (get mode 'derived-mode-parent)))))
 
 (defun prettier--local-file-name ()
   "Return the buffer's local filename."

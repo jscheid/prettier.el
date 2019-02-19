@@ -371,7 +371,9 @@ touched.")
     (less-mode . (less))
     (json-mode . (lambda ()
                    (if (seq-contains
-                        '("package.json" "package-lock.json" "composer.json")
+                        '("package.json"
+                          "package-lock.json"
+                          "composer.json")
                         (file-name-nondirectory buffer-file-name))
                        '(json-stringify json json5)
                      '(json json5 json-stringify))))
@@ -392,16 +394,20 @@ In each element, car is the mode and cdr is either a list of
 parser names as symbols, or a function (without arguments) that,
 when called with buffer current, returns such a list.")
 
-(defconst prettier-web-mode-part-parsers
+(defconst prettier-web-mode-content-type-parsers
   `((nil . (html))
-    (javascript . ,#'prettier--babel-or-flow)
-    (jsx . ,#'prettier--babel-or-flow)
-    (css . (css))
-    (json . (json json5))
-    (markdown . (markdown))
-    (ruby . (ruby))
-    (sql . (postgresql)))
-  "Map from web-mode part identifier to Prettier parsers.")
+    ("javascript" . ,#'prettier--babel-or-flow)
+    ("jsx" . ,#'prettier--babel-or-flow)
+    ("css" . (css))
+    ("json" . (json json5))
+    ("markdown" . (markdown))
+    ("ruby" . (ruby))
+    ("sql" . (postgresql)))
+  "Map from web-mode content type to Prettier parsers.
+
+In each element, car is the mode and cdr is either a list of
+parser names as symbols, or a function (without arguments) that,
+when called with buffer current, returns such a list.")
 
 
 ;;;; Variables
@@ -1248,7 +1254,7 @@ for derived modes.)"
           major-mode)))))
 
 (defun prettier--parsers-for-mode (mode)
-  "Return an alist of parsers for the given major MODE.
+  "Return a list of parsers for the given major MODE.
 
 The mode's parents are searched recursively when there are no
 parsers configured for it and it is a derived mode."
@@ -1257,10 +1263,8 @@ parsers configured for it and it is a derived mode."
      (let ((major-mode-parsers
             (or (when (eq mode 'web-mode)
                   (cdr (assoc
-                        (or (get-text-property 1 'part-side)
-                            (and (web-mode-propertize 1 2)
-                                 (get-text-property 1 'part-side)))
-                        prettier-web-mode-part-parsers)))
+                        web-mode-content-type
+                        prettier-web-mode-content-type-parsers)))
                 (cdr (assoc mode
                             prettier-major-mode-parsers)))))
        (if (functionp major-mode-parsers)

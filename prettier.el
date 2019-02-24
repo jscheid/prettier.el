@@ -372,11 +372,13 @@ touched.")
     (scss-mode . (scss))
     (less-mode . (less))
     (json-mode . (lambda ()
-                   (if (seq-contains
-                        '("package.json"
-                          "package-lock.json"
-                          "composer.json")
-                        (file-name-nondirectory buffer-file-name))
+                   (if (and
+                        buffer-file-name
+                        (seq-contains
+                         '("package.json"
+                           "package-lock.json"
+                           "composer.json")
+                         (file-name-nondirectory buffer-file-name)))
                        '(json-stringify json json5)
                      '(json json5 json-stringify))))
     (graphql-mode . (graphql))

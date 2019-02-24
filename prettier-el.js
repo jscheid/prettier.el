@@ -460,7 +460,17 @@ function bestParser(prettier, parsers, options, filepath) {
       const editorconfig = packet[1] === "E".charCodeAt(0);
       const inferParser = packet[2] === "I".charCodeAt(0);
       const filepath = packet.toString("utf-8", 3, newlineIndex1);
-      const parsersString = packet.toString("utf-8", newlineIndex1 + 1);
+
+      const newlineIndex2 = packet.indexOf(10, newlineIndex1 + 1);
+      if (newlineIndex2 < 0) {
+        protocolError();
+      }
+
+      const parsersString = packet.toString(
+        "utf-8",
+        newlineIndex1 + 1,
+        newlineIndex2
+      );
       const parsers = parseParsers(parsersString);
 
       const prettier = getPrettierForPath(filepath);

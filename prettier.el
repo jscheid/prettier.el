@@ -145,6 +145,7 @@ Requires Prettier 1.9+."
                                       css
                                       flow
                                       graphql
+                                      html
                                       json
                                       less
                                       lua
@@ -362,6 +363,7 @@ touched.")
 (defconst prettier-major-mode-parsers
   `((angular-mode . (angular))
     (html-mode . (html))
+    (mhtml-mode . (html))
     (js-mode . ,#'prettier--babel-or-flow)
     (js2-mode . ,#'prettier--babel-or-flow)
     (js3-mode . ,#'prettier--babel-or-flow)

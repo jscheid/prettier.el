@@ -46,7 +46,7 @@
 (require 'subr-x)
 
 (eval-when-compile
-  (require 'cl)
+  (require 'cl-lib)
   (require 'compile)
   (require 'rx)
 
@@ -1286,11 +1286,9 @@ parsers configured for it and it is a derived mode."
 
 ;;;; Integration with other packages
 
-(eval-after-load 'compile
-  '(progn
-     (add-to-list 'compilation-error-regexp-alist-alist
-                  (cons 'prettier prettier-compilation-regexps))
-     (add-to-list 'compilation-error-regexp-alist 'prettier)))
+(add-to-list 'compilation-error-regexp-alist-alist
+             (cons 'prettier prettier-compilation-regexps))
+(add-to-list 'compilation-error-regexp-alist 'prettier)
 
 
 ;;;; Footer

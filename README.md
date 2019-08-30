@@ -20,10 +20,11 @@ package can be found at
 
 ## Installation
 
-This package is not yet on MELPA because it's not as stable as
-`prettier-emacs`. For now, head to the [Releases
+Head to the [Releases
 page](https://github.com/jscheid/prettier.el/releases/) and download a
-tarball, then `M-x package-install-file` if you're feeling lucky.
+tarball, then `M-x package-install-file`.  It would be nice if the
+package could be installed through a repository such as MELPA, but the
+nature of the package makes that quite difficult.
 
 A `node` executable needs to be on `exec-path`. It is recommended to
 provide a recent version of Node since older versions tend to be

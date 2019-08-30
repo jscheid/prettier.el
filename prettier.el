@@ -70,9 +70,9 @@
 
 Essentially this selects when you wait for Prettier startup
 overhead: with `none', you tend to wait for it on first save.
-With `full', you wait when `prettier-mode' is first activated.
-`some' is a compromise, with it you wait some on first activation
-and some on first save."
+With `full', you wait when command `prettier-mode' is first
+activated.  `some' is a compromise, with it you wait some on
+first activation and some on first save."
   :type '(choice
           (none :tag "No pre-warming, everything on-demand")
           (some :tag "Start server early, no other pre-warming")
@@ -202,7 +202,7 @@ on your Prettier version and which plug-ins you have installed."
   #'prettier--in-node-modules-p
   "A function called to selectively ignore certain buffers.
 
-The function should return non-nil if `prettier-mode'
+The function should return non-nil if command `prettier-mode'
 should not be enabled for the current buffer."
   :type 'function
   :package-version '(prettier . "0.2.0")
@@ -407,7 +407,7 @@ when called with buffer current, returns such a list.")
     ("markdown" . (markdown))
     ("ruby" . (ruby))
     ("sql" . (postgresql)))
-  "Map from web-mode content type to Prettier parsers.
+  "Map from `web-mode' content type to Prettier parsers.
 
 In each element, car is the mode and cdr is either a list of
 parser names as symbols, or a function (without arguments) that,
@@ -926,7 +926,7 @@ close to post-formatting as possible."
 `prettier-mode-sync-config-flag' to nil: %S" err))))
 
 (defun prettier--restore-config ()
-  "Reset all local variables set by prettier--sync-config.
+  "Reset all local variables set by `prettier--sync-config'.
 
 Don't touch variables that have changed since config was synced."
   (mapc

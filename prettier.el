@@ -44,10 +44,10 @@
 (require 'nvm)
 (require 'tramp)
 (require 'subr-x)
+(require 'compile)
 
 (eval-when-compile
   (require 'cl-lib)
-  (require 'compile)
   (require 'rx)
 
   (defun prettier--readme-link (anchor)

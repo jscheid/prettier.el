@@ -238,6 +238,14 @@ Set this variable to nil to disable the mode line completely."
                  (prettier--readme-link
                   "prettier-lighter"))))
 
+(defcustom prettier-module-path nil
+  "The module to load instead of the bundled or global prettier.
+
+The value must be an absolute path."
+  :type '(choice (const nil) string)
+  :group 'prettier
+  :risky t)
+
 (defface prettier-inline-error
   '((t :inherit compilation-error))
   "Prettier face for errors."
@@ -794,6 +802,7 @@ otherwise, launch a new one."
                   "w"
                   (if prettier-editorconfig-flag "E" "e")
                   (prettier--local-file-name)
+                  "\n" (or prettier-module-path "-")
                   "\n\n")
                  t))
               process)
@@ -1014,6 +1023,7 @@ Don't touch variables that have changed since config was synced."
                       (if prettier-editorconfig-flag "E" "e")
                       (if prettier-infer-parser-flag "I" "i")
                       (prettier--local-file-name)
+                      "\n" (or prettier-module-path "-")
                       "\n" (if parsers (string-join
                                         (mapcar #'symbol-name parsers)
                                         ",")
@@ -1098,6 +1108,7 @@ formatting."
                  (if prettier-editorconfig-flag "E" "e")
                  (if prettier-infer-parser-flag "I" "i")
                  filename
+                 "\n" (or prettier-module-path "-")
                  "\n" (if parsers
                           (string-join
                            (mapcar #'symbol-name parsers)

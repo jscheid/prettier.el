@@ -28,8 +28,9 @@ const execSync = externalRequire("child_process")["execSync"];
 // We return this exit code whenever there's unexpected data on the wire
 const EXIT_CODE_PROTOCOL_ERROR = 1;
 
-// Keep track of loaded Prettier instances by file path.
+// Keep track of loaded Prettier instances by file path and the module path.
 const prettierCache = new Map();
+const prettierCacheByModulePath = new Map();
 
 const Z = createResponseHeader("Z", 0);
 const newline = Buffer.from("\n");
@@ -210,25 +211,45 @@ function getPrettierForDirectory(directory) {
 }
 
 /**
- * Find the Prettier package to use for the given file, falling back
- * to a global package. Throw if neither is found. Memoize results
- * for future lookups.
+ * Return the Prettier instance to use for the given file.
+ * Load from the `modulePath` or the path that is found recursively from the
+ * `filepath`, falling back to a global package. Throw if none of the packages
+ * are found.
+ * Memoize results for future lookups.
  *
  * @param {!string} filepath
+ * @param {!string} modulePath
  *
  * @return {!PrettierAPI} The Prettier package found.
  */
-function getPrettierForPath(filepath) {
+function getPrettierForPath(filepath, modulePath) {
+  if (modulePath !== "-") {
+    if (!path["isAbsolute"](modulePath)) {
+      throw new Error("The path must be absolute. '" + modulePath + "'");
+    }
+    let prettier = prettierCacheByModulePath.get(modulePath);
+    if (!prettier) {
+      try {
+        const stat = fs["statSync"](modulePath);
+        prettier = externalRequire(modulePath);
+        prettierCacheByModulePath.set(modulePath, prettier);
+      } catch (e) {
+        throw new Error("Cannot find prettier. '" + modulePath + "'");
+      }
+    }
+    return prettier
+  }
+
   if (!path["isAbsolute"](filepath)) {
     return getGlobalPrettier();
   }
-  let prettierPath = prettierCache.get(filepath);
-  if (!prettierPath) {
+  let prettier = prettierCache.get(filepath);
+  if (!prettier) {
     const directory = path["dirname"](filepath);
-    prettierPath = getPrettierForDirectory(directory);
-    prettierCache.set(filepath, prettierPath);
+    prettier = getPrettierForDirectory(directory);
+    prettierCache.set(filepath, prettier);
   }
-  return prettierPath;
+  return prettier;
 }
 
 function parseParsers(parsersString) {
@@ -296,7 +317,19 @@ function bestParser(prettier, parsers, options, filepath) {
 
       const editorconfig = packet[1] === "E".charCodeAt(0);
       const filepath = packet.toString("utf-8", 2, newlineIndex1);
-      const prettier = getPrettierForPath(filepath);
+
+      const newlineIndex2 = packet.indexOf(10, newlineIndex1 + 1);
+      if (newlineIndex2 < 0) {
+        protocolError();
+      }
+
+      const modulePath = packet.toString(
+        "utf-8",
+        newlineIndex1 + 1,
+        newlineIndex2
+      );
+
+      const prettier = getPrettierForPath(filepath, modulePath);
       if (filepath.length > 0) {
         prettier.resolveConfig.sync(filepath, {
           editorconfig
@@ -327,28 +360,40 @@ function bestParser(prettier, parsers, options, filepath) {
       protocolError();
     }
 
-    const parsersString = packet.toString(
+    const modulePath = packet.toString(
       "utf-8",
       newlineIndex1 + 1,
       newlineIndex2
     );
+
     const newlineIndex3 = packet.indexOf(10, newlineIndex2 + 1);
     if (newlineIndex3 < 0) {
       protocolError();
     }
 
+    const parsersString = packet.toString(
+      "utf-8",
+      newlineIndex2 + 1,
+      newlineIndex3
+    );
+
+    const newlineIndex4 = packet.indexOf(10, newlineIndex3 + 1);
+    if (newlineIndex4 < 0) {
+      protocolError();
+    }
+
     const cursorOffset = parseInt(
-      packet.toString("ascii", newlineIndex2 + 1, newlineIndex3),
+      packet.toString("ascii", newlineIndex3 + 1, newlineIndex4),
       16
     );
     const filename = packet
-      .slice(newlineIndex3 + 1, packet.length - 2)
+      .slice(newlineIndex4 + 1, packet.length - 2)
       .toString("ascii");
 
     const body = fs["readFileSync"](filename, "utf8");
 
     try {
-      const prettier = getPrettierForPath(filepath);
+      const prettier = getPrettierForPath(filepath, modulePath);
 
       const timeBeforeFormat = Date.now();
 
@@ -466,14 +511,25 @@ function bestParser(prettier, parsers, options, filepath) {
         protocolError();
       }
 
-      const parsersString = packet.toString(
+      const modulePath = packet.toString(
         "utf-8",
         newlineIndex1 + 1,
         newlineIndex2
       );
+
+      const newlineIndex3 = packet.indexOf(10, newlineIndex2 + 1);
+      if (newlineIndex3 < 0) {
+        protocolError();
+      }
+
+      const parsersString = packet.toString(
+        "utf-8",
+        newlineIndex2 + 1,
+        newlineIndex3
+      );
       const parsers = parseParsers(parsersString);
 
-      const prettier = getPrettierForPath(filepath);
+      const prettier = getPrettierForPath(filepath, modulePath);
 
       const options =
         prettier.resolveConfig.sync(filepath, { editorconfig }) || {};

@@ -168,6 +168,59 @@ function getGlobalPrettier() {
 }
 
 /**
+ * Return the Prettier package from `node_modules` if it exists.
+ *
+ * @param {!string} directory
+ * @return {!PrettierAPI|null}
+ */
+function getLocalPrettier(directory) {
+  const prettierCandidate = path["join"](
+    directory,
+    "node_modules",
+    "prettier"
+  );
+  try {
+    const stat = fs["statSync"](prettierCandidate);
+    return stat.isDirectory() ? externalRequire(prettierCandidate) : null;
+  } catch (e) {
+    if (e.code === "ENOENT") return null;
+    throw e;
+  }
+}
+
+/**
+ * Return the Prettier package under Yarn Plug'n'Play if either `.pnp.js` or
+ * `.pnp.cjs` exists. Inject PnP API into the Node.js environment only once.
+ * This side effect is unlikely to be a problem at present but we recommend to
+ * use project-specific Node.js executable with any tool such as `direnv`.
+ *
+ * @param {!string} directory
+ * @return {!PrettierAPI|null}
+ */
+function getYarnPnpifyedLocalPrettier(directory) {
+  const yarnPnpCandidate = path["join"](directory, ".pnp");
+  if (fs["existsSync"](yarnPnpCandidate + ".js") ||
+      fs["existsSync"](yarnPnpCandidate + ".cjs")) {
+    try {
+      const m = externalRequire("module");
+      const createRequire = m["createRequire"] || m["createRequireFromPath"];
+      if (!createRequire) {
+        throw new Error("You should upgrage Node.js v10.12.0 or above.");
+      }
+      if (!process["versions"]["pnp"]) {
+        externalRequire(yarnPnpCandidate)["setup"]();
+      }
+      const targetRequire = createRequire(yarnPnpCandidate);
+      return targetRequire(targetRequire["resolve"]('prettier'));
+    } catch (e) {
+      if (e.code === "ENOENT") return null;
+      throw e;
+    }
+  }
+  return null;
+}
+
+/**
  * Find the Prettier package to use for the given directory, falling back to a
  * global package. Throw if neither is found. Memoize results for future
  * lookups.
@@ -178,35 +231,26 @@ function getGlobalPrettier() {
  * @return {!PrettierAPI} The Prettier package found.
  */
 function getPrettierForDirectory(directory) {
+  const cached = prettierCache.get(directory);
+  if (cached) return cached;
+
   if (fs["existsSync"](path["join"](directory, "package.json"))) {
-    const prettierCandidate = path["join"](
-      directory,
-      "node_modules",
-      "prettier"
-    );
-    try {
-      const stat = fs["statSync"](prettierCandidate);
-      prettierCache.set(
-        directory,
-        stat.isDirectory()
-          ? externalRequire(prettierCandidate)
-          : getGlobalPrettier()
-      );
-    } catch (e) {
-      if (e.code === "ENOENT") {
-        return getGlobalPrettier();
-      }
+    const prettier = getLocalPrettier(directory) ||
+      getYarnPnpifyedLocalPrettier(directory);
+    if (prettier) {
+      prettierCache.set(directory, prettier);
+      return prettier;
     }
-  } else {
-    const parent = path["dirname"](directory);
-    prettierCache.set(
-      directory,
-      parent !== directory
-        ? getPrettierForDirectory(parent)
-        : getGlobalPrettier()
-    );
   }
-  return prettierCache.get(directory);
+
+  const parent = path["dirname"](directory);
+  if (parent !== directory) {
+    return getPrettierForDirectory(parent);
+  } else {
+    const prettier = getGlobalPrettier()
+    prettierCache.set(directory, prettier);
+    return prettier;
+  }
 }
 
 /**

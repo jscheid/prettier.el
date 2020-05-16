@@ -458,7 +458,11 @@ For debugging only.")
 For debugging and performance tuning only.")
 
 (defvar prettier-processes (make-hash-table :test 'equal)
-  "Keep track of running mode processes, keyed by `server-id'.")
+  "Keep track of running node processes, keyed by `node-command'.
+It's the name or path of the node executable `prettier--find-node' returns.")
+
+(defvar prettier-nvm-node-command-cache nil
+  "Cache for the result of `prettier--node-from-nvm'.")
 
 ;;;;; Local Variables
 
@@ -519,7 +523,7 @@ With prefix, ask for the parser to use"
 
 (defun prettier--quit-all-processes ()
   "Quit all Prettier sub-processes."
-  (maphash (lambda (_server-id process)
+  (maphash (lambda (_key process)
              (quit-process process))
            prettier-processes)
   (clrhash prettier-processes))
@@ -616,7 +620,8 @@ should be used when filing bug reports."
  'global-prettier-mode-hook
  (lambda ()
    (unless global-prettier-mode
-     (prettier--quit-all-processes))))
+     (prettier--quit-all-processes)
+     (setq prettier-nvm-node-command-cache nil))))
 
 
 ;;;; Support
@@ -663,7 +668,7 @@ and `prettier' is enabled in current buffer."
     (with-temp-message "Prettier syncing config"
       (prettier--sync-config))))
 
-(defun prettier--create-process (server-id)
+(defun prettier--create-process (server-id node-command)
   "Create a new server process for SERVER-ID.
 
 The process is a long-running server process that receives
@@ -672,7 +677,7 @@ with Prettier) and returning a response.
 
 SERVER-ID should be the symbol `local' for launching a local
 process, or a remote identification as defined by `tramp-mode'
-when launching a remote process.
+when launching a remote process.  Each process is started with NODE-COMMAND.
 
 The process is launched by running `node' with a minified version
 of `bootstrap.js` as a script provided on the command line; this
@@ -703,7 +708,6 @@ Additional considerations were:
              (concat prettier-el-home
                      "prettier-el.js.gz.base64"))
             (buffer-string)))
-         (node-command (prettier--find-node server-id))
          (new-process
           (progn
             (with-current-buffer buf
@@ -712,7 +716,7 @@ Additional considerations were:
             (start-file-process
              "prettier"
              buf
-             node-command
+             (prettier--pick-localname node-command)
              "--eval"
              (with-temp-buffer
                (insert-file-contents-literally
@@ -730,7 +734,7 @@ Additional considerations were:
                   (string-trim event)))
        (unless prettier-keep-server-buffer-flag
          (kill-buffer (process-buffer proc)))
-       (remhash server-id prettier-processes)))
+       (remhash node-command prettier-processes)))
     (set-process-coding-system new-process 'binary 'binary)
     (process-put new-process :server-id server-id)
     (condition-case nil
@@ -771,8 +775,9 @@ remote) corresponding to the current buffer, return that;
 otherwise, launch a new one."
   (let* ((server-id (or (prettier--buffer-remote-p)
                         'local))
+         (node-command (prettier--find-node server-id))
          (existing-process
-          (gethash server-id prettier-processes))
+          (gethash node-command prettier-processes))
          (existing-live-process
           (when (and existing-process
                      (process-live-p existing-process))
@@ -784,8 +789,8 @@ otherwise, launch a new one."
             (let ((process
                    (or existing-live-process
                        (puthash
-                        server-id
-                        (prettier--create-process server-id)
+                        node-command
+                        (prettier--create-process server-id node-command)
                         prettier-processes))))
               (when warmup-p
                 (prettier--request-iter
@@ -1085,7 +1090,7 @@ formatting."
                               (<= point-before end-point)
                               (- point-before start-point -1)))
          (filename (prettier--local-file-name))
-         (tempfile (make-temp-file "prettier-emacs."))
+         (tempfile (make-nearby-temp-file "prettier-emacs."))
          result-point
          any-errors
          timestamps
@@ -1104,7 +1109,7 @@ formatting."
                            ",")
                         "-")
                  "\n" (format "%X" (or relative-point 1))
-                 "\n" tempfile
+                 "\n" (prettier--pick-localname tempfile)
                  "\n\n"))))
     (unwind-protect
         (when (< start-point end-point)
@@ -1242,9 +1247,24 @@ via nvm or when nvm itself is not installed."
 SERVER-ID gives the context.  It is the symbol `local' when the
 path of the node executable on the local host is sought,
 otherwise the remote identification as defined by `tramp-mode'."
-  (or (and (eq server-id 'local)
-           (prettier--node-from-nvm))
-      "node"))
+  (if (eq server-id 'local)
+      (or prettier-nvm-node-command-cache
+          (let ((nvm-node-command (prettier--node-from-nvm)))
+            (when nvm-node-command
+              (setq prettier-nvm-node-command-cache nvm-node-command)
+              nvm-node-command))
+          (executable-find "node")
+          "node")
+    ;; Remote
+    (concat server-id "node")))
+
+(defun prettier--pick-localname (file)
+  "Return the local name or path from FILE."
+  (or (and (tramp-tramp-file-p file)
+           (save-match-data
+             (and (string-match tramp-file-name-regexp file)
+                  (match-string (nth 4 tramp-file-name-structure) file))))
+      file))
 
 (defun prettier--parsers ()
   "Return an alist of parsers to use for the current buffer.

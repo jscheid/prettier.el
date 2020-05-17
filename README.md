@@ -1,6 +1,6 @@
 # prettier.el
 
-![](https://github.com/jscheid/prettier.el/workflows/test/badge.svg)
+![CI](https://github.com/jscheid/prettier.el/workflows/CI/badge.svg)
 
 The `prettier` Emacs package reformats your code by running
 [Prettier](https://github.com/prettier/prettier) with minimal overhead,

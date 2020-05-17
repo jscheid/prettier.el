@@ -7,7 +7,7 @@
 ;; Created: 7 Nov 2018
 ;; Keywords: convenience, languages, files
 ;; Homepage: https://github.com/jscheid/prettier.el
-;; Package-Requires: ((emacs "24.4") (iter2 "0.9") (nvm "0.2"))
+;; Package-Requires: ((emacs "26.1") (iter2 "0.9") (nvm "0.2"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -493,6 +493,11 @@ parser unless `prettier-infer-parser-flag' is nil.")
 
 (defvar-local prettier-version nil
   "The Prettier version used for this buffer")
+
+;;;;; Imported Variables
+
+;; For interop with web-mode.el
+(defvar web-mode-content-type)
 
 
 ;;;; Commands

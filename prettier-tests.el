@@ -1,0 +1,60 @@
+;;; prettier-tests.el --- Tests for prettier.el  -*- lexical-binding: t; -*-
+
+;; Copyright (c) 2018-present Julian Scheid
+
+;;; Commentary:
+
+;; Test suite for prettier.el.
+
+;;; Code:
+
+
+
+(require 'ert)
+(require 'prettier)
+
+(defun prettier--run-test-case (directory)
+  "Run prettier test in DIRECTORY."
+  (let ((default-directory directory))
+    (shell-command "npm install"))
+  (mapc
+   (lambda (original-file)
+     (let ((actual
+            (with-temp-buffer
+              (insert-file-contents original-file)
+              (setq buffer-file-name original-file)
+              (set-auto-mode)
+              (prettier-prettify)
+              (buffer-string)))
+           (expected
+            (with-temp-buffer
+              (insert-file-contents
+               (replace-regexp-in-string
+                "\\.original\\.js$"
+                ".prettier.js"
+                original-file))
+              (buffer-string))))
+       (should (equal actual expected))))
+   (directory-files directory t "\\.original\\.js$")))
+
+(mapc
+ (lambda (test-directory)
+   (eval
+    `(ert-deftest
+         ,(intern (format "prettier-test-%s" (file-name-base test-directory))) ()
+       ,(format "Run tests in %S." test-directory)
+       (prettier--run-test-case ,test-directory))))
+ (mapcar
+  #'car
+  (seq-filter
+   (lambda (file-and-attributes)
+     (eq t (cadr file-and-attributes)))
+   (directory-files-and-attributes
+    (concat default-directory
+            "test-cases/")
+    t
+    "[a-z].*"))))
+
+(provide 'prettier-tests)
+
+;;; prettier-tests.el ends here

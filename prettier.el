@@ -45,6 +45,7 @@
 (require 'tramp)
 (require 'subr-x)
 (require 'compile)
+(require 'ansi-color)
 
 (eval-when-compile
   (require 'cl-lib)
@@ -836,7 +837,8 @@ separate window."
       (setq buffer-read-only nil)
       (save-excursion
         (erase-buffer)
-        (insert (apply #'format string objects)))
+        (insert (ansi-color-apply
+                 (apply #'format string objects))))
       (compilation-mode)
       (setq-local compilation-error-screen-columns nil)
       (display-buffer errbuf))))

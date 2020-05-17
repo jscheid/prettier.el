@@ -940,27 +940,6 @@ close to post-formatting as possible."
      (message "Could not sync Prettier config, consider setting \
 `prettier-mode-sync-config-flag' to nil: %S" err))))
 
-(defun prettier--restore-config ()
-  "Reset all local variables set by `prettier--sync-config'.
-
-Don't touch variables that have changed since config was synced."
-  (mapc
-   (lambda (backup-setting)
-     (let ((var (car backup-setting))
-           (new-value (nth 3 backup-setting)))
-       ;; Leave the variable alone if the user has changed it
-       ;; since loading `prettier-mode'
-       (when (equal new-value (eval var))
-         ;; Was it a local variable before we set it?
-         (if (nth 1 backup-setting)
-             ;; Yes, set it to the old value
-             (set var (nth 2 backup-setting))
-           ;; No, remove the local variable
-           (kill-local-variable var)))))
-   prettier-js-previous-local-settings)
-  (kill-local-variable prettier-js-previous-local-settings)
-  (kill-local-variable prettier-prettier-config-cache))
-
 (iter2-defun prettier--request-iter (prettier-process
                                      request
                                      &optional fire-and-forget-p)

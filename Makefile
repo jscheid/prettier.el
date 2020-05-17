@@ -1,8 +1,11 @@
 PANDOC := ${HOME}/.local/bin/pandoc
+VERSION := $(shell emacs -Q -batch --eval='(progn (require '"'"'package) (find-file "prettier.el") (princ (package-version-join (package-desc-version (package-buffer-info)))))')
 
-package: README COPYING COPYING-diff-match-patch prettier-pkg.el prettier.el prettier-el.js.gz.base64 bootstrap-min.js dir prettier.info
-	$(eval VERSION := $(shell emacs -batch --eval='(progn (require '"'"'package) (find-file "prettier.el") (princ (package-version-join (package-desc-version (package-buffer-info)))))'))
-	env COPYFILE_DISABLE=true gtar --transform 's,^,prettier-${VERSION}/,' -cf prettier-$(VERSION).tar $^
+build: dir \
+			 prettier.info \
+			 COPYING-diff-match-patch \
+			 prettier-el.js.gz.base64 \
+			 bootstrap-min.js
 
 COPYING-diff-match-patch: node_modules/diff-match-patch/LICENSE
 	cp $^ $@
@@ -16,12 +19,6 @@ prettier.info: prettier.texi
 
 prettier.texi: README.md metadata.yaml build-tools/ghm-to-texi.py
 	${PANDOC} metadata.yaml $< -s --filter ./build-tools/ghm-to-texi.py -o $@
-
-README: README.md build-tools/ghm-to-md.py
-	${PANDOC} $< -f gfm -s -t markdown_strict --filter ./build-tools/ghm-to-md.py -o $@
-
-prettier-pkg.el: prettier.el build-tools/create-pkg-el.el
-	emacs -batch -l ./build-tools/create-pkg-el.el
 
 prettier-el-min.js: prettier-el.js externs.js
 	node_modules/.bin/google-closure-compiler \

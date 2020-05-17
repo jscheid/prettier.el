@@ -1,12 +1,9 @@
 node_modules/
-*.info
 *.texi
 /README
-*.base64
-*-min.js
+prettier-el-min.js
 *.tar
 *.sig
 *.elc
 *-pkg.el
-dir
 COPYING-diff-match-patch

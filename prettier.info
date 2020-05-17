@@ -1,0 +1,334 @@
+This is prettier.info, produced by makeinfo version 6.7 from
+prettier.texi.
+
+INFO-DIR-SECTION Emacs
+START-INFO-DIR-ENTRY
+* Prettier: (prettier).         Prettify code on save.
+END-INFO-DIR-ENTRY
+
+
+File: prettier.info,  Node: Top,  Next: Installation,  Up: (dir)
+
+Top
+***
+
+The ‘prettier’ Emacs package reformats your code by running Prettier
+(https://github.com/prettier/prettier) with minimal overhead, by request
+or transparently on file save.
+
+Overhead on top of Prettier registers in the range of single-digit
+milliseconds for reasonably sized files on a decent system.
+
+Prettier is run in a long-running process so that Node startup overhead
+is only paid once, and so that V8 JIT compilation has a better
+opportunity to work its magic.
+
+Additional features include first-class support for reformatting remote
+files via ‘tramp-mode’ and integration with many major modes.
+
+This is not the official Prettier integration for Emacs.  The official
+package can be found at <https://github.com/prettier/prettier-emacs>.
+
+* Menu:
+
+* Installation::
+* Usage::
+* Customization::
+* Differences from prettier-emacs::
+* Credits::
+* License::
+
+
+File: prettier.info,  Node: Installation,  Next: Usage,  Prev: Top,  Up: Top
+
+1 Installation
+**************
+
+Head to the Releases page
+(https://github.com/jscheid/prettier.el/releases/) and download a
+tarball, then ‘M-x package-install-file’.  It would be nice if the
+package could be installed through a repository such as MELPA, but the
+nature of the package makes that quite difficult.
+
+A ‘node’ executable needs to be on ‘exec-path’.  It is recommended to
+provide a recent version of Node since older versions tend to be
+significantly slower.  ‘prettier’ also uses the Emacs ‘nvm’ package so
+that if you have nvm (https://github.com/creationix/nvm), all you need
+to do is run ‘nvm install node’ to ensure the latest version is
+available.
+
+The Prettier package needs to be installed inside your npm package, or
+globally with either ‘npm’ or ‘yarn’.  Version 1.6 is the minimum
+requirement but it’s recommended to use the latest version in order to
+get access to all parsers, features and bugfixes.
+
+You can use ‘M-x prettier-info’ to see which versions are being used for
+a given buffer and to aid with diagnosis when Node or Prettier can’t be
+found.
+
+The above instructions are for reformatting local files; see below for
+how to configure remote systems.
+
+Use ‘M-x global-prettier-mode’ to turn on the minor mode in all major
+modes supported by your version of Prettier and by any plugins installed
+(see *note prettier-enabled-parsers: #prettier-enabled-parsers. below.)
+When enabled, the minor mode will reformat on file save and also sync
+settings from Prettier to Emacs, such as indentation level.
+
+To enable ‘prettier-mode’ globally at startup:
+
+(add-hook 'after-init-hook #'global-prettier-mode)
+
+
+File: prettier.info,  Node: Usage,  Next: Customization,  Prev: Installation,  Up: Top
+
+2 Usage
+*******
+
+When enabled as a minor mode with ‘prettier-mode’, your source code is
+formatted on save.
+
+You can also ‘M-x prettier-prettify’ to prettify the whole buffer at any
+time in any buffer (doing so doesn’t require the minor mode to be
+enabled), and ‘M-x prettier-prettify-region’ to prettify region (but
+note that region should align with a complete block of code).
+
+If you give a prefix argument to either of these two commands you will
+be able to set/override the Prettier parser to use for formatting.
+
+* Menu:
+
+* Changing Prettier Configuration::
+* On Remote Servers::
+
+
+File: prettier.info,  Node: Changing Prettier Configuration,  Next: On Remote Servers,  Up: Usage
+
+2.1 Changing Prettier Configuration
+===================================
+
+After you change Prettier options (by creating, modifying or deleting
+Prettier configuration files), this package won’t pick up the changes
+automatically.  Disable and re-enable ‘global-prettier-mode’ to force
+reloading the new configuration.  This might be improved in the future
+by monitoring relevant files for changes.
+
+
+File: prettier.info,  Node: On Remote Servers,  Prev: Changing Prettier Configuration,  Up: Usage
+
+2.2 On Remote Servers
+=====================
+
+When you edit files on a remote host, Prettier will be run remotely on
+that host.  It follows that the remote host needs to have Node and
+Prettier installed as described above.  ‘nvm’ can’t be used on remote
+hosts; you will have to ensure ‘tramp-remote-path’ is set correctly.
+
+Remote formatting might be improved in the future in the following ways:
+
+   • Using remote Prettier only to determine options for the remote
+     file, but using local Prettier to do the actual formatting.  This
+     would help with large source files and slow connections.
+
+   • Obviating the need for remote Prettier by walking the remote
+     filesystem and finding configuration files.  This is unlikely to
+     happen because it would mean having to keep this package’s code in
+     sync with Prettier configuration discovery logic.
+
+
+File: prettier.info,  Node: Customization,  Next: Differences from prettier-emacs,  Prev: Usage,  Up: Top
+
+3 Customization
+***************
+
+M-x customize-group prettier
+
+* Menu:
+
+* prettier-mode-sync-config-flag::
+* prettier-editorconfig-flag::
+* prettier-enabled-parsers::
+* prettier-infer-parser-flag::
+* prettier-inline-errors-flag::
+* prettier-pre-warm::
+* prettier-mode-ignore-buffer-function::
+* prettier-mode-lighter::
+
+
+File: prettier.info,  Node: prettier-mode-sync-config-flag,  Next: prettier-editorconfig-flag,  Up: Customization
+
+3.1 ‘prettier-mode-sync-config-flag’
+====================================
+
+Set this to ‘nil’ if you don’t want ‘prettier-mode’ to change your
+buffer-local settings to match Prettier options.
+
+
+File: prettier.info,  Node: prettier-editorconfig-flag,  Next: prettier-enabled-parsers,  Prev: prettier-mode-sync-config-flag,  Up: Customization
+
+3.2 ‘prettier-editorconfig-flag’
+================================
+
+Set this to ‘nil’ if you don’t want Prettier to use ‘.editorconfig’
+files to load options.
+
+
+File: prettier.info,  Node: prettier-enabled-parsers,  Next: prettier-infer-parser-flag,  Prev: prettier-editorconfig-flag,  Up: Customization
+
+3.3 ‘prettier-enabled-parsers’
+==============================
+
+Customize this to disable any parsers you don’t want to use.
+
+
+File: prettier.info,  Node: prettier-infer-parser-flag,  Next: prettier-inline-errors-flag,  Prev: prettier-enabled-parsers,  Up: Customization
+
+3.4 ‘prettier-infer-parser-flag’
+================================
+
+Set this to ‘nil’ if you don’t want Prettier to fall back to inferring
+the parser to use based on the file name and contents.
+
+
+File: prettier.info,  Node: prettier-inline-errors-flag,  Next: prettier-pre-warm,  Prev: prettier-infer-parser-flag,  Up: Customization
+
+3.5 ‘prettier-inline-errors-flag’
+=================================
+
+Set this to ‘t’ if you want syntax errors to be shown inline instead of
+sending them to the default error buffer.  This feature is experimental
+and won’t yet work well when the error is outside the window.
+
+
+File: prettier.info,  Node: prettier-pre-warm,  Next: prettier-mode-ignore-buffer-function,  Prev: prettier-inline-errors-flag,  Up: Customization
+
+3.6 ‘prettier-pre-warm’
+=======================
+
+Choose how to pre-warm Prettier caches.
+
+Essentially this selects when you wait for Prettier startup overhead:
+with ‘none’, you tend to wait for it on first save.  With ‘full’, you
+wait when ‘prettier-mode’ is first activated.
+
+‘some’ is a compromise, with it you wait some on first activation and
+some on first save.
+
+
+File: prettier.info,  Node: prettier-mode-ignore-buffer-function,  Next: prettier-mode-lighter,  Prev: prettier-pre-warm,  Up: Customization
+
+3.7 ‘prettier-mode-ignore-buffer-function’
+==========================================
+
+This function is called in every buffer that ‘prettier-mode’ supports.
+If it returns non-nil, the buffer is ignored and ‘prettier-mode’ won’t
+be activated for it.  The default is to ignore buffers for files nested
+beneath a ‘node_modules’ directory.  You can set this to ‘nil’ and no
+buffers will be ignored.
+
+
+File: prettier.info,  Node: prettier-mode-lighter,  Prev: prettier-mode-ignore-buffer-function,  Up: Customization
+
+3.8 ‘prettier-mode-lighter’
+===========================
+
+This Sexpr is evaluated as part of the modeline.  The default value
+shows the string ‘Prettier’ as well as the Prettier parser and Prettier
+version used for the buffer.
+
+
+File: prettier.info,  Node: Differences from prettier-emacs,  Next: Credits,  Prev: Customization,  Up: Top
+
+4 Differences from ‘prettier-emacs’
+***********************************
+
+   • ‘prettier-emacs’ launches Prettier in an external process, paying
+     the Node startup overhead on each invocation unless mitigated by
+     tools such as ‘prettier_d’.  This package uses a long-running child
+     process.
+
+   • ‘prettier-emacs’ lets Prettier guess the parser to use based on the
+     filename.  This package instead derives the parser from the major
+     mode when possible and falls back to a guess based on the filename
+     only when the major mode isn’t supported.
+
+   • ‘prettier-emacs’ doesn’t touch your buffer configuration, such as
+     indentation offsets.  ‘prettier-mode’, by default, tries to set the
+     buffer configuration to match Prettier configuration as closely as
+     possible.
+
+   • This package keeps point at the same location relative to your
+     code.
+
+   • This package has first-class support for editing remote files via
+     ‘tramp-mode’ (with some room for improvement for large source files
+     and slow connections), and for using a local Prettier installation
+     (in your project’s ‘node_modules’ rather than installed globally.)
+
+   • ‘prettier-emacs’ allows overriding various Prettier options by
+     setting ‘prettier-js-args’ or ‘prettier-js-width-mode’.  In
+     contrast, this package believes that your Prettier configuration
+     files should serve as the single source of truth.
+
+
+File: prettier.info,  Node: Credits,  Next: License,  Prev: Differences from prettier-emacs,  Up: Top
+
+5 Credits
+*********
+
+This package is heavily inspired by the original package that integrated
+Prettier into Emacs, ‘prettier-emacs’.
+
+
+File: prettier.info,  Node: License,  Prev: Credits,  Up: Top
+
+6 License
+*********
+
+© Copyright 2018-present Julian Scheid
+
+GNU Public License v3 or any later version (see <COPYING>)
+
+
+
+Tag Table:
+Node: Top196
+Node: Installation1142
+Ref: #installation1253
+Node: Usage2898
+Ref: #usage3005
+Node: Changing Prettier Configuration3588
+Ref: #changing-prettier-configuration3762
+Node: On Remote Servers4092
+Ref: #on-remote-servers4238
+Node: Customization5072
+Ref: #customization5214
+Node: prettier-mode-sync-config-flag5501
+Ref: #prettier-mode-sync-config-flag5697
+Node: prettier-editorconfig-flag5824
+Ref: #prettier-editorconfig-flag6045
+Node: prettier-enabled-parsers6147
+Ref: #prettier-enabled-parsers6360
+Node: prettier-infer-parser-flag6424
+Ref: #prettier-infer-parser-flag6642
+Node: prettier-inline-errors-flag6775
+Ref: #prettier-inline-errors-flag6988
+Node: prettier-pre-warm7201
+Ref: #prettier-pre-warm7404
+Node: prettier-mode-ignore-buffer-function7739
+Ref: #prettier-mode-ignore-buffer-function7974
+Node: prettier-mode-lighter8302
+Ref: #prettier-mode-lighter8481
+Node: Differences from prettier-emacs8655
+Ref: #differences-from-prettier-emacs8843
+Node: Credits10254
+Ref: #credits10380
+Node: License10497
+Ref: #license10583
+
+End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:

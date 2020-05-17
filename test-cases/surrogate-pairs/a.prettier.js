@@ -1,0 +1,2 @@
+let foo = "🙋";
+let bar;

@@ -23,6 +23,7 @@ const externalRequire = require;
 const fs = externalRequire("fs");
 const path = externalRequire("path");
 const vm = externalRequire("vm");
+const punycode = externalRequire("punycode");
 const execSync = externalRequire("child_process")["execSync"];
 
 // We return this exit code whenever there's unexpected data on the wire
@@ -460,11 +461,11 @@ function bestParser(prettier, parsers, options, filepath) {
             }
             break;
           case -1:
-            out.push(createResponseHeader("D", str.length));
+            out.push(createResponseHeader("D", punycode['ucs2']['decode'](str).length));
             break;
           case 0:
             if (index < diffResult.length - 1) {
-              out.push(createResponseHeader("M", str.length));
+              out.push(createResponseHeader("M", punycode['ucs2']['decode'](str).length));
             }
         }
       }

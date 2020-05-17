@@ -114,7 +114,7 @@ When nil, send errors to the default error buffer."
 (put 'prettier-mode-sync-config-flag 'safe-local-variable 'booleanp)
 
 (defcustom prettier-editorconfig-flag t
-  "Non-nil means to use .editorconfig files when present.
+  "Non-nil means to use `.editorconfig' files when present.
 
 Requires Prettier 1.9+."
   :type 'boolean
@@ -328,19 +328,20 @@ Other errors are shown inline or in the error buffer.")
 
 A list of lists of two or three elements:
 
-  `(VAR-LIST SOURCE-CONFIG [TRANSFORM-FN])'
+  `(VAR-LIST SOURCE-CONFIGURATION [TRANSFORM-FUNCTION])'
 
 VAR-LIST is a list of Emacs variables to set.
 
-SOURCE-CONFIG is either a keyword that specifies which Prettier
-configuration option to use for setting the Emacs variables, or
-- when not a keyword - a static value to set the variables to.
+SOURCE-CONFIGURATION is either a keyword that specifies which
+Prettier configuration option to use for setting the Emacs
+variables, or - when not a keyword - a static value to set the
+variables to.
 
-TRANSFORM-FN is an optional function; when present, it is called
-with the value of the Prettier option and the result is used for
-setting the Emacs variables, unless it is the symbol `unchanged'.
-If that symbol is returned, the Emacs variables won't be
-touched.")
+TRANSFORM-FUNCTION is an optional function; when present, it is
+called with the value of the Prettier option and the result is
+used for setting the Emacs variables, unless it is the symbol
+`unchanged'.  If that symbol is returned, the Emacs variables
+won't be touched.")
 
 (eval-when-compile
   (defconst prettier-error-rx
@@ -354,7 +355,7 @@ touched.")
           ")")))
 
 (defun prettier--guess-js-ish ()
-  "Return which parsers to use in a JavaScript-ish buffer."
+  "Return which parsers to use for a buffer with a JS-like mode."
   (cond
    ((and (boundp 'tide-mode)
          tide-mode)
@@ -423,7 +424,7 @@ when called with buffer current, returns such a list.")
 
 (defvar prettier-el-home (file-name-directory
                           (or load-file-name buffer-file-name))
-  "Directory with `prettier.el' and auxilliary files.")
+  "Directory with `prettier.el' and auxiliary files.")
 
 (defvar prettier-error-regex
   (eval-when-compile
@@ -663,10 +664,10 @@ Prettier parser name) or nil when nothing was selected."
       (list (intern result)))))
 
 (defun prettier--maybe-sync-config ()
-  "Sync Prettier config in current buffer when appropriate.
+  "Sync Prettier configuration in current buffer when appropriate.
 
-Config is synced when `prettier-mode-sync-config-flag' is non-nil
-and `prettier' is enabled in current buffer."
+Configuration is synced when `prettier-mode-sync-config-flag' is
+non-nil and `prettier' is enabled in current buffer."
   (when (and prettier-mode
              prettier-mode-sync-config-flag
              (null prettier-config-cache))
@@ -889,7 +890,7 @@ separate window."
           (kill-buffer errbuf))))))
 
 (defun prettier--sync-config ()
-  "Try to sync prettier config for current buffer.
+  "Try to sync prettier configuration for current buffer.
 
 Tries loading the configuration, ignoring failure with a message.
 
@@ -992,7 +993,7 @@ close to post-formatting as possible."
      (signal (car err) (cdr err)))))
 
 (defun prettier--load-config ()
-  "Load prettier config for current buffer."
+  "Load prettier configuration for current buffer."
   (let* ((start-time (current-time))
          (prettier-process (prettier--get-process))
          (process-buf (process-buffer prettier-process))
@@ -1032,12 +1033,12 @@ close to post-formatting as possible."
           config)
       (iter-close iter))))
 
-(defun prettier--default-callback (message process-buf)
+(defun prettier--default-callback (message process-buffer)
   "Default response callback.
 
 Handles any MESSAGE only by handling errors.
 
-PROCESS-BUF is the process buffer."
+PROCESS-BUFFER is the process buffer."
   (dolist (command message)
     (let ((kind (car command)))
       (cond
@@ -1046,7 +1047,7 @@ PROCESS-BUF is the process buffer."
         (prettier--show-remote-error
          "Internal"
          (with-temp-buffer
-           (insert (with-current-buffer process-buf
+           (insert (with-current-buffer process-buffer
                      (buffer-substring-no-properties
                       (nth 0 (cdr command))
                       (nth 1 (cdr command)))))

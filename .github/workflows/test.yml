@@ -62,6 +62,18 @@ jobs:
       - name: Install zopfli
         run: sudo apt-get install zopfli
 
+      - name: Install personal aspell dictionary
+        run: |
+          cat > ~/.aspell.en.pws <<< "\
+          personal_ws-1.1 en 0
+          minified
+          parsers
+          minibuffer
+          stdin
+          editorconfig
+          nvm
+          "
+
       - name: Build JavaScript
         run: make prettier-el.js.gz.base64 bootstrap-min.js
 

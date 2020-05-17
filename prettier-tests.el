@@ -2,6 +2,8 @@
 
 ;; Copyright (c) 2018-present Julian Scheid
 
+;; Package-Requires: ((web-mode "20200501"))
+
 ;;; Commentary:
 
 ;; Test suite for prettier.el.
@@ -54,6 +56,12 @@
             "test-cases/")
     t
     "[a-z].*"))))
+
+(ert-deftest web-mode-typescript ()
+  (with-temp-buffer
+    (setq buffer-file-name "test.ts")
+    (web-mode)
+    (should (equal (prettier--parsers) '(typescript)))))
 
 (provide 'prettier-tests)
 

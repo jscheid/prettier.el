@@ -75,9 +75,9 @@ With `full', you wait when command `prettier-mode' is first
 activated.  `some' is a compromise, with it you wait some on
 first activation and some on first save."
   :type '(choice
-          (none :tag "No pre-warming, everything on-demand")
-          (some :tag "Start server early, no other pre-warming")
-          (full :tag "Pre-warm as much as possible"))
+          (const :tag "No pre-warming, everything on-demand" none)
+          (const :tag "Start server early, no other pre-warming" some)
+          (const :tag "Pre-warm as much as possible" full))
   :package-version '(prettier . "0.1.0")
   :group 'prettier
   :link '(info-link "(prettier)prettier-pre-warm")

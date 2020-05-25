@@ -6,4 +6,3 @@ prettier-el-min.js
 *.sig
 *.elc
 *-pkg.el
-COPYING-diff-match-patch

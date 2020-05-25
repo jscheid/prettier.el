@@ -1,4 +1,4 @@
-This is prettier.info, produced by makeinfo version 6.7 from
+This is prettier.info, produced by makeinfo version 6.5 from
 prettier.texi.
 
 INFO-DIR-SECTION Emacs
@@ -43,12 +43,6 @@ File: prettier.info,  Node: Installation,  Next: Usage,  Prev: Top,  Up: Top
 
 1 Installation
 **************
-
-Head to the Releases page
-(https://github.com/jscheid/prettier.el/releases/) and download a
-tarball, then ‘M-x package-install-file’.  It would be nice if the
-package could be installed through a repository such as MELPA, but the
-nature of the package makes that quite difficult.
 
 A ‘node’ executable needs to be on ‘exec-path’.  It is recommended to
 provide a recent version of Node since older versions tend to be
@@ -295,36 +289,36 @@ Tag Table:
 Node: Top196
 Node: Installation1142
 Ref: #installation1253
-Node: Usage2898
-Ref: #usage3005
-Node: Changing Prettier Configuration3588
-Ref: #changing-prettier-configuration3762
-Node: On Remote Servers4092
-Ref: #on-remote-servers4238
-Node: Customization5072
-Ref: #customization5214
-Node: prettier-mode-sync-config-flag5501
-Ref: #prettier-mode-sync-config-flag5697
-Node: prettier-editorconfig-flag5824
-Ref: #prettier-editorconfig-flag6045
-Node: prettier-enabled-parsers6147
-Ref: #prettier-enabled-parsers6360
-Node: prettier-infer-parser-flag6424
-Ref: #prettier-infer-parser-flag6642
-Node: prettier-inline-errors-flag6775
-Ref: #prettier-inline-errors-flag6988
-Node: prettier-pre-warm7201
-Ref: #prettier-pre-warm7404
-Node: prettier-mode-ignore-buffer-function7739
-Ref: #prettier-mode-ignore-buffer-function7974
-Node: prettier-mode-lighter8302
-Ref: #prettier-mode-lighter8481
-Node: Differences from prettier-emacs8655
-Ref: #differences-from-prettier-emacs8843
-Node: Credits10254
-Ref: #credits10380
-Node: License10497
-Ref: #license10583
+Node: Usage2613
+Ref: #usage2720
+Node: Changing Prettier Configuration3303
+Ref: #changing-prettier-configuration3477
+Node: On Remote Servers3807
+Ref: #on-remote-servers3953
+Node: Customization4787
+Ref: #customization4929
+Node: prettier-mode-sync-config-flag5216
+Ref: #prettier-mode-sync-config-flag5412
+Node: prettier-editorconfig-flag5539
+Ref: #prettier-editorconfig-flag5760
+Node: prettier-enabled-parsers5862
+Ref: #prettier-enabled-parsers6075
+Node: prettier-infer-parser-flag6139
+Ref: #prettier-infer-parser-flag6357
+Node: prettier-inline-errors-flag6490
+Ref: #prettier-inline-errors-flag6703
+Node: prettier-pre-warm6916
+Ref: #prettier-pre-warm7119
+Node: prettier-mode-ignore-buffer-function7454
+Ref: #prettier-mode-ignore-buffer-function7689
+Node: prettier-mode-lighter8017
+Ref: #prettier-mode-lighter8196
+Node: Differences from prettier-emacs8370
+Ref: #differences-from-prettier-emacs8558
+Node: Credits9969
+Ref: #credits10095
+Node: License10212
+Ref: #license10298
 
 End Tag Table
 

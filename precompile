@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -exo pipefail
+
+vagrant up && vagrant ssh -- make --directory=/vagrant

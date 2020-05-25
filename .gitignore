@@ -6,3 +6,5 @@ prettier-el-min.js
 *.sig
 *.elc
 *-pkg.el
+/.vagrant/
+ubuntu-bionic-*-cloudimg-console.log

@@ -144,9 +144,11 @@ Requires Prettier 1.9+."
                                       babel
                                       babel-flow
                                       css
+                                      elm
                                       flow
                                       graphql
                                       html
+                                      java
                                       json
                                       less
                                       lua
@@ -154,12 +156,17 @@ Requires Prettier 1.9+."
                                       mdx
                                       php
                                       postgresql
+                                      pug
                                       python
                                       ruby
                                       scss
+                                      solidity
+                                      svelte
                                       swift
+                                      toml
                                       typescript
                                       vue
+                                      xml
                                       yaml)
   "Prettier parsers to enable.
 
@@ -173,8 +180,10 @@ on your Prettier version and which plug-ins you have installed."
     (const :tag "Babel (formerly Babylon)" babel)
     (const :tag "Babel-Flow (1.15+)" babel-flow)
     (const :tag "CSS (1.4+)" css)
+    (const :tag "Elm (2.0+?, requires plugin)" elm)
     (const :tag "Flow" flow)
     (const :tag "GraphQL (1.5+)" graphql)
+    (const :tag "Java (2.0+?, requires plugin)" java)
     (const :tag "JSON (1.5+)" json)
     (const :tag "JSON 5 (1.5+)" json5)
     (const :tag "JSON.stringify (1.5+)" json-stringify)
@@ -185,12 +194,17 @@ on your Prettier version and which plug-ins you have installed."
     (const :tag "MDX (1.15+)" mdx)
     (const :tag "PHP (1.10+, requires plugin)" php)
     (const :tag "PostgreSQL (1.10+, requires plugin" postgresql)
+    (const :tag "Pug (2.0+, requires plugin)" pug)
     (const :tag "Python (1.10+, requires plugin)" python)
     (const :tag "Ruby (1.10+, requires plugin)" ruby)
     (const :tag "SCSS (1.4+)" scss)
+    (const :tag "Solidity (2.0+?, requires plugin)" solidity)
+    (const :tag "Svelte (1.16+, requires plugin)" svelte)
     (const :tag "Swift (1.10+, requires plugin)" swift)
+    (const :tag "TOML (1.16+)" toml)
     (const :tag "TypeScript (1.4+)" typescript)
     (const :tag "Vue (1.10+)" vue)
+    (const :tag "XML (1.10+, requires plugin)" xml)
     (const :tag "YAML (1.14+)" yaml))
   :package-version '(prettier . "0.1.0")
   :group 'prettier
@@ -273,8 +287,9 @@ Other errors are shown inline or in the error buffer.")
       ruby-indent-tabs-mode)        ; ruby-mode
      :useTabs)
 
-    ((c-basic-offset                ; cc-mode
+    ((c-basic-offset                ; cc-mode, java-mode
       css-indent-offset             ; css-mode, scss-mode etc
+      elm-indent-offset             ; elm-mode
       enh-ruby-indent-level         ; enh-ruby-mode
       graphql-indent-level          ; graphql-mode
       handlebars-basic-offset       ; handlebars-mode
@@ -282,9 +297,13 @@ Other errors are shown inline or in the error buffer.")
       js2-basic-offset              ; js2-mode
       js3-indent-level              ; js3-mode
       lua-indent-level              ; lua-mode
+      nxml-attribute-indent         ; nxml-mode
+      nxml-child-indent             ; nxml-mode
+      nxml-outline-child-indent     ; nxml-mode
+      pug-tab-width                 ; pug-mode
       python-indent                 ; python-mode
       ruby-indent-level             ; ruby-mode
-      sgml-basic-offset             ; js2-mode, html-mode
+      sgml-basic-offset             ; js2-mode, html-mode, svelte-mode
       smie-indent-basic             ; smie.el (generic)
       standard-indent               ; indent.el (generic)
       swift-mode:basic-offset       ; swift-mode.el
@@ -369,8 +388,11 @@ won't be touched.")
 
 (defconst prettier-major-mode-parsers
   `((angular-mode . (angular))
+    (elm-mode . (elm))
+    (svelte-mode . (svelte html))
     (html-mode . (html))
     (mhtml-mode . (html))
+    (java-mode . (java))
     (js-mode . ,#'prettier--guess-js-ish)
     (js2-mode . ,#'prettier--guess-js-ish)
     (js3-mode . ,#'prettier--guess-js-ish)
@@ -390,6 +412,10 @@ won't be touched.")
                      '(json json5 json-stringify))))
     (graphql-mode . (graphql))
     (markdown-mode . (markdown))
+    (nxml-mode . (xml))
+    (pug-mode . (pug))
+    (solidity-mode . (solidity))
+    (toml-mode . (toml))
     (vue-mode . (vue))
     (yaml-mode . (yaml))
     (lua-mode . (lua))

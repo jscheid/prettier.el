@@ -65,7 +65,7 @@ jobs:
       - name: Install pandoc 2
         run: |
           curl -LO https://github.com/jgm/pandoc/releases/download/2.9.2.1/pandoc-2.9.2.1-1-amd64.deb
-          dpkg -i pandoc-2.9.2.1-1-amd64.deb
+          sudo dpkg -i pandoc-2.9.2.1-1-amd64.deb
 
       - name: Install panflute
         run: sudo pip3 install panflute

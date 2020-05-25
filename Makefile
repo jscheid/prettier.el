@@ -1,4 +1,5 @@
-PANDOC := ${HOME}/.local/bin/pandoc
+SHELL = /bin/bash -o pipefail
+PANDOC = pandoc
 VERSION := $(shell emacs -Q -batch --eval='(progn (require '"'"'package) (find-file "prettier.el") (princ (package-version-join (package-desc-version (package-buffer-info)))))')
 
 build: dir \

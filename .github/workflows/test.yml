@@ -60,11 +60,14 @@ jobs:
         run: npm install
 
       - name: Install additional packages
-        run: sudo apt-get -y install aspell zopfli
+        run: sudo apt-get -y install aspell zopfli pandoc python3
+
+      - name: Install panflute
+        run: sudo pip3 install panflute
 
       - name: Ensure precompiled files are up-to-date
         run: |
-          files=dir prettier.info COPYING-diff-match-patch prettier-el.js.gz.base64 bootstrap-min.js
+          files="dir prettier.info COPYING-diff-match-patch prettier-el.js.gz.base64 bootstrap-min.js"
           for file in files; do
             mv $file ${file}.orig
           done

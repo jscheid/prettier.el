@@ -78,7 +78,7 @@ jobs:
           done
           make $files
           for file in $files; do
-            cmp $file ${file}.orig
+            diff ${file}.orig $file
           done
 
       - name: Lint

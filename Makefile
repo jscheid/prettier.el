@@ -46,7 +46,8 @@ bootstrap-min.js: bootstrap.js externs.js
 		--dependency_mode=NONE
 
 prettier-el.js.gz.base64: prettier-el-min.js
-	zopfli -c $< | base64 --wrap=70 > $@
+	node -e "const fs = require('fs'); const zopfli = require('node-zopfli-es'); fs.createReadStream('$<').pipe(zopfli.createGzip()).pipe(process.stdout)" \
+		| base64 --wrap=70 > $@
 
 clean:
 	rm -f *-min.js *.base64 *.gz *.tar *.sig *.info *.texi *.elc prettier-pkg.el dir README

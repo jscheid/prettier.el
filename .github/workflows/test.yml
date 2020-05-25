@@ -60,7 +60,7 @@ jobs:
         run: npm install
 
       - name: Install additional packages
-        run: sudo apt-get -y install aspell zopfli python3 python3-setuptools texinfo
+        run: sudo apt-get -y install aspell python3 python3-setuptools texinfo
 
       - name: Install pandoc 2
         run: |

@@ -68,11 +68,11 @@ jobs:
       - name: Ensure precompiled files are up-to-date
         run: |
           files="dir prettier.info COPYING-diff-match-patch prettier-el.js.gz.base64 bootstrap-min.js"
-          for file in files; do
+          for file in $files; do
             mv $file ${file}.orig
           done
           make $files
-          for file in files; do
+          for file in $files; do
             cmp $file ${file}.orig
           done
 

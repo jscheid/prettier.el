@@ -63,6 +63,16 @@
     (web-mode)
     (should (equal (prettier--parsers) '(typescript)))))
 
+(ert-deftest customize-prettier ()
+  (customize-option 'prettier-pre-warm)
+  (customize-option 'prettier-inline-errors-flag)
+  (customize-option 'prettier-mode-sync-config-flag)
+  (customize-option 'prettier-editorconfig-flag)
+  (customize-option 'prettier-infer-parser-flag)
+  (customize-option 'prettier-enabled-parsers)
+  (customize-option 'prettier-mode-ignore-buffer-function)
+  (customize-option 'prettier-lighter))
+
 (provide 'prettier-tests)
 
 ;;; prettier-tests.el ends here

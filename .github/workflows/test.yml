@@ -60,7 +60,7 @@ jobs:
         run: npm install
 
       - name: Install additional packages
-        run: sudo apt-get -y install aspell zopfli pandoc python3
+        run: sudo apt-get -y install aspell zopfli pandoc python3 python3-setuptools
 
       - name: Install panflute
         run: sudo pip3 install panflute

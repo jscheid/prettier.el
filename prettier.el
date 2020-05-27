@@ -201,7 +201,7 @@ on your Prettier version and which plug-ins you have installed."
     (const :tag "Solidity (2.0+?, requires plugin)" solidity)
     (const :tag "Svelte (1.16+, requires plugin)" svelte)
     (const :tag "Swift (1.10+, requires plugin)" swift)
-    (const :tag "TOML (1.16+)" toml)
+    (const :tag "TOML (1.16+, requires plugin)" toml)
     (const :tag "TypeScript (1.4+)" typescript)
     (const :tag "Vue (1.10+)" vue)
     (const :tag "XML (1.10+, requires plugin)" xml)

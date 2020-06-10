@@ -262,14 +262,6 @@ Set this variable to nil to disable the mode line completely."
 
 ;;;; Non-customizable
 
-(defconst prettier-el-version
-  (eval-when-compile
-    (package-version-join
-     (package-desc-version
-      (save-excursion
-        (package-buffer-info)))))
-  "Version of `prettier' package.")
-
 (defconst prettier-benign-errors
   '("Error: Couldn't resolve parser")
   "Errors in this list are shown in the echo area.
@@ -573,6 +565,20 @@ IDENTIFICATION and CONNECTED have the same meaning as
               identification
               connected)))
 
+(defun prettier-el--version ()
+  "Return the version of the `prettier' package."
+  (package-version-join
+   (package-desc-version
+    (with-temp-buffer
+      (let ((src (or
+                  ;; load-file-name seemed like it would be useful here,
+                  ;; but didn't work in practice.
+                  (locate-library "prettier.el")
+                  ;; This one shouldn't be needed:
+                  (concat prettier-el-home "/prettier.el"))))
+        (insert-file-contents src))
+      (package-buffer-info)))))
+
 (defun prettier-info ()
   "Show a temporary buffer with diagnostic info.
 
@@ -582,7 +588,7 @@ should be used when filing bug reports."
   (let ((info
          (list
           :emacs-version (emacs-version)
-          :prettier-el-version prettier-el-version
+          :prettier-el-version (prettier-el--version)
           :buffer-file-name buffer-file-name
           :remote-id (prettier--buffer-remote-p)
           :major-mode major-mode

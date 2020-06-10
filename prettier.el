@@ -1043,16 +1043,16 @@ close to post-formatting as possible."
         (progn
           (iter-do (command iter)
             (if (eq (car command) ?O)
-                 (let* ((json-object-type 'plist)
-                        (json-false nil))
-                   (setq
-                    config
-                    (json-read-from-string
-                     (base64-decode-string
-                      (with-current-buffer process-buf
-                        (buffer-substring-no-properties
-                         (nth 1 command)
-                         (nth 2 command)))))))))
+                (let* ((json-object-type 'plist)
+                       (json-false nil))
+                  (setq
+                   config
+                   (json-read-from-string
+                    (base64-decode-string
+                     (with-current-buffer process-buf
+                       (buffer-substring-no-properties
+                        (nth 1 command)
+                        (nth 2 command)))))))))
           (when prettier-show-benchmark-flag
             (message
              "Prettier load-config took %.1fms"
@@ -1143,10 +1143,10 @@ formatting."
                         (command-str
                          (lambda ()
                            (base64-decode-string
-                               (with-current-buffer process-buf
-                                 (buffer-substring-no-properties
-                                  (nth 0 (cdr command))
-                                  (nth 1 (cdr command))))))))
+                            (with-current-buffer process-buf
+                              (buffer-substring-no-properties
+                               (nth 0 (cdr command))
+                               (nth 1 (cdr command))))))))
                     (cond
                      ((eq kind ?M)
                       (forward-char (cdr command)))

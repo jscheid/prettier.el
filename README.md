@@ -47,6 +47,8 @@ found.
 The above instructions are for reformatting local files; see below for
 how to configure remote systems.
 
+## Configuration
+
 Use `M-x global-prettier-mode` to turn on the minor mode in all major
 modes supported by your version of Prettier and by any plugins installed
 (see [prettier-enabled-parsers](#prettier-enabled-parsers) below.) When
@@ -57,6 +59,32 @@ To enable `prettier-mode` globally at startup:
 
 ```elisp
 (add-hook 'after-init-hook #'global-prettier-mode)
+```
+
+### Enabling per-file / per-directory
+
+emacs has a great feature called [Per-Directory Local
+Variables](https://www.gnu.org/software/emacs/manual/html_node/emacs/Directory-Variables.html#Directory-Variables),
+which can be utilised to automatically enable `prettier-mode` for
+specific files or directories.  For example, if you put the following
+in a `.dir-locals.el` file at the top of a git repository:
+
+```elisp
+((js-mode . ((eval . (prettier-mode t)))))
+```
+
+then it should automatically enable `prettier-mode` for any files
+using `js-mode`.  (N.B. If the files are already open, you will have
+to close and re-open them to see this take effect.)  You could also
+match by file path instead of by mode, as described in the above docs.
+
+There is an alternative mechanism which can be handy if you want to avoid
+adding `.dir-locals.el` to a directory; add these to your emacs config:
+
+```elisp
+(dir-locals-set-class-variables 'prettier-js
+                                '((js-mode . ((eval . (prettier-mode t))))))
+(dir-locals-set-directory-class "/path/to/my/pretty/project/" 'prettier-js)
 ```
 
 ## Usage

@@ -11,6 +11,25 @@ Run `make` in the root directory and then `M-x eval-buffer` in `prettier.el`.
 
 After changes to JS code you need to run `make` again as well as `M-x prettier-kill-all-processes`.
 
+## Linting and testing
+
+To run the linters locally, follow a similar approach to the CI pipeline
+defined in `.github/workflows/`, e.g. first set up a sandbox:
+
+    ./makem.sh -v --sandbox=sandbox --install-{deps,linters}
+
+and then run the linters:
+
+    ./makem.sh -v --sandbox=sandbox lint
+
+You can also run all tests:
+
+    ./makem.sh -v --sandbox=sandbox test
+
+or both linters and tests in one go:
+
+    ./makem.sh -v --sandbox=sandbox all
+
 ## Creating a package
 
 To creata a distribution package, you will additionally need the

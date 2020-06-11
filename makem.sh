@@ -224,7 +224,6 @@ function elisp-package-initialize-file {
 
     cat >$file <<EOF
 (require 'package)
-(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 (setq package-archives (list (cons "gnu" "https://elpa.gnu.org/packages/")
                              (cons "melpa" "https://melpa.org/packages/")
                              (cons "melpa-stable" "https://stable.melpa.org/packages/")))
@@ -515,7 +514,6 @@ function sandbox {
         verbose 1 "Installing packages into sandbox..."
 
         run_emacs \
-            --eval '(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")' \
             --eval "(package-refresh-contents)" \
             "${args_sandbox_package_install[@]}" \
             && success "Packages installed." \

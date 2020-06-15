@@ -24,7 +24,7 @@ jobs:
         run: npm install
 
       - name: Install additional packages
-        run: sudo apt-get -y install aspell zopfli
+        run: sudo apt-get -y install zopfli
 
       - name: Build JavaScript
         run: make prettier-el.js.gz.base64 bootstrap-min.js

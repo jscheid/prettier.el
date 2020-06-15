@@ -1,0 +1,44 @@
+name: Publish
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: release
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Reset to master
+        run: git reset --hard origin/master
+
+      - uses: nodenv/actions/setup-nodenv@master
+
+      - name: Install JavaScript dependencies
+        run: npm install
+
+      - name: Install additional packages
+        run: sudo apt-get -y install aspell zopfli
+
+      - name: Build JavaScript
+        run: make prettier-el.js.gz.base64 bootstrap-min.js
+
+      - name: Add and commit
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -f bootstrap-min.js prettier-el.js.gz.base64
+          git commit -m "Release ${{github.sha}}"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          branch: release
+          force: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}

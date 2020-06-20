@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from panflute import run_filter, Header, Image
 from panflute.elements import RAW_FORMATS

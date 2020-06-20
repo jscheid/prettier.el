@@ -15,6 +15,10 @@
 (require 'ert)
 (require 'prettier)
 
+(setq prettier-el-home (concat
+                        (file-name-directory load-file-name)
+                        "dist/"))
+
 (defun prettier--run-test-case (directory)
   "Run prettier test in DIRECTORY."
   (let ((default-directory directory))

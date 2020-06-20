@@ -22,11 +22,14 @@ package can be found at
 
 ## Installation
 
-Head to the [Releases
-page](https://github.com/jscheid/prettier.el/releases/) and download a
-tarball, then `M-x package-install-file`.  It would be nice if the
-package could be installed through a repository such as MELPA, but the
-nature of the package makes that quite difficult.
+Install from a [tarball](https://github.com/jscheid/prettier.el/releases/) or
+via [quelpa](https://github.com/quelpa/quelpa):
+
+    (quelpa '(prettier :fetcher github
+                       :repo "jscheid/prettier-el"
+                       :branch "release"
+                       :files (:defaults "*.js" "*.base64")
+                       :version-regexp "^release-\\(.*\\)"))
 
 A `node` executable needs to be on `exec-path`. It is recommended to
 provide a recent version of Node since older versions tend to be
@@ -66,7 +69,7 @@ To enable `prettier-mode` globally at startup:
 emacs has a great feature called [Per-Directory Local
 Variables](https://www.gnu.org/software/emacs/manual/html_node/emacs/Directory-Variables.html#Directory-Variables),
 which can be utilised to automatically enable `prettier-mode` for
-specific files or directories.  For example, if you put the following
+specific files or directories. For example, if you put the following
 in a `.dir-locals.el` file at the top of a git repository:
 
 ```elisp
@@ -74,8 +77,8 @@ in a `.dir-locals.el` file at the top of a git repository:
 ```
 
 then it should automatically enable `prettier-mode` for any files
-using `js-mode`.  (N.B. If the files are already open, you will have
-to close and re-open them to see this take effect.)  You could also
+using `js-mode`. (N.B. If the files are already open, you will have
+to close and re-open them to see this take effect.) You could also
 match by file path instead of by mode, as described in the above docs.
 
 There is an alternative mechanism which can be handy if you want to avoid

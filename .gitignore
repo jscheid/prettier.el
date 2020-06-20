@@ -1,7 +1,9 @@
 /dist/
 /build/
+/.vagrant/
 /README
 node_modules/
 *.tar
 *.sig
 *.elc
+*.log

@@ -1,12 +1,7 @@
-node_modules/
-*.info
-*.texi
+/dist/
+/build/
 /README
-*.base64
-*-min.js
+node_modules/
 *.tar
 *.sig
 *.elc
-*-pkg.el
-dir
-COPYING-diff-match-patch

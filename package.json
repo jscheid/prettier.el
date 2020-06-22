@@ -9,6 +9,7 @@
     "diff-match-patch": "^1.0.4"
   },
   "dependencies": {
-    "google-closure-compiler": "^20181028.0.1"
+    "google-closure-compiler": "^20181028.0.1",
+    "node-zopfli-es": "^1.0.4"
   }
 }

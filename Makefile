@@ -1,29 +1,38 @@
-PANDOC := ${HOME}/.local/bin/pandoc
+SHELL = /bin/bash -o pipefail
+PANDOC = pandoc
+VERSION := $(shell emacs -Q -batch --eval='(progn (require '"'"'package) (find-file "prettier.el") (princ (package-version-join (package-desc-version (package-buffer-info)))))')
 
-package: README COPYING COPYING-diff-match-patch prettier-pkg.el prettier.el prettier-el.js.gz.base64 bootstrap-min.js dir prettier.info
-	$(eval VERSION := $(shell emacs -batch --eval='(progn (require '"'"'package) (find-file "prettier.el") (princ (package-version-join (package-desc-version (package-buffer-info)))))'))
-	env COPYFILE_DISABLE=true gtar --transform 's,^,prettier-${VERSION}/,' -cf prettier-$(VERSION).tar $^
+dist: build/ \
+			dist/ \
+			dist/COPYING \
+			dist/COPYING-diff-match-patch \
+			dist/prettier-pkg.el \
+			dist/prettier.el \
+			dist/prettier-el.js.gz.base64 \
+			dist/bootstrap-min.js \
+			dist/dir \
+			dist/prettier.info
 
-COPYING-diff-match-patch: node_modules/diff-match-patch/LICENSE
+build/ dist/:
+	mkdir -p $@
+
+dist/%: %
+	cp $< $@
+
+dist/COPYING-diff-match-patch: node_modules/diff-match-patch/LICENSE
 	cp $^ $@
 
-dir: prettier.info
+dist/dir: dist/prettier.info
 	rm -f $@
 	install-info $< $@
 
-prettier.info: prettier.texi
+dist/prettier.info: build/prettier.texi
 	makeinfo --no-validate --force $< -o $@
 
-prettier.texi: README.md metadata.yaml build-tools/ghm-to-texi.py
+build/prettier.texi: README.md metadata.yaml build-tools/ghm-to-texi.py
 	${PANDOC} metadata.yaml $< -s --filter ./build-tools/ghm-to-texi.py -o $@
 
-README: README.md build-tools/ghm-to-md.py
-	${PANDOC} $< -f gfm -s -t markdown_strict --filter ./build-tools/ghm-to-md.py -o $@
-
-prettier-pkg.el: prettier.el build-tools/create-pkg-el.el
-	emacs -batch -l ./build-tools/create-pkg-el.el
-
-prettier-el-min.js: prettier-el.js externs.js
+build/prettier-el-min.js: prettier-el.js externs.js
 	node_modules/.bin/google-closure-compiler \
 		--js_output_file=$@ \
 		--module_resolution=NODE \
@@ -36,7 +45,7 @@ prettier-el-min.js: prettier-el.js externs.js
 		--hide_warnings_for=node_modules/diff-match-patch \
 		--dependency_mode=NONE
 
-bootstrap-min.js: bootstrap.js externs.js
+dist/bootstrap-min.js: bootstrap.js externs.js
 	node_modules/.bin/google-closure-compiler \
 		--js_output_file=$@ \
 		--module_resolution=NODE \
@@ -47,8 +56,12 @@ bootstrap-min.js: bootstrap.js externs.js
 		--externs externs.js \
 		--dependency_mode=NONE
 
-prettier-el.js.gz.base64: prettier-el-min.js
-	zopfli -c $< | base64 --wrap=70 > $@
+dist/prettier-el.js.gz.base64: build/prettier-el-min.js
+	node -e "const fs = require('fs'); const zopfli = require('node-zopfli-es'); fs.createReadStream('$<').pipe(zopfli.createGzip()).pipe(process.stdout)" \
+		| base64 --wrap=70 > $@
+
+dist/prettier-pkg.el: prettier.el build-tools/create-pkg-el.el
+	emacs -batch --load=./build-tools/create-pkg-el.el --eval='(prettier--create-pkg-el "$@")'
 
 clean:
-	rm -f *-min.js *.base64 *.gz *.tar *.sig *.info *.texi *.elc prettier-pkg.el dir README
+	rm -Rf build/ dist/

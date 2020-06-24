@@ -1,5 +1,5 @@
 /**
- * @fileoverview prettier-el main server process
+ * @fileoverview prettier.el main server process
  */
 
 // Copyright (c) 2018-present Julian Scheid
@@ -35,7 +35,10 @@ const prettierCache = new Map();
 const Z = createResponseHeader("Z", 0);
 const newline = Buffer.from("\n");
 
-const otherParserName = new Map([["babylon", "babel"], ["babel", "babylon"]]);
+const otherParserName = new Map([
+  ["babylon", "babel"],
+  ["babel", "babylon"],
+]);
 
 /** @type{PrettierAPI} */
 let globalPrettier;
@@ -124,7 +127,7 @@ function getGlobalPrettier() {
 
   const execSyncOptions = {
     ["encoding"]: "utf-8",
-    ["stdio"]: ["ignore", "pipe", "ignore"]
+    ["stdio"]: ["ignore", "pipe", "ignore"],
   };
 
   try {
@@ -175,11 +178,7 @@ function getGlobalPrettier() {
  * @return {!PrettierAPI|null}
  */
 function getLocalPrettier(directory) {
-  const prettierCandidate = path["join"](
-    directory,
-    "node_modules",
-    "prettier"
-  );
+  const prettierCandidate = path["join"](directory, "node_modules", "prettier");
   try {
     const stat = fs["statSync"](prettierCandidate);
     return stat.isDirectory() ? externalRequire(prettierCandidate) : null;
@@ -200,8 +199,10 @@ function getLocalPrettier(directory) {
  */
 function getYarnPnpifyedLocalPrettier(directory) {
   const yarnPnpCandidate = path["join"](directory, ".pnp");
-  if (fs["existsSync"](yarnPnpCandidate + ".js") ||
-      fs["existsSync"](yarnPnpCandidate + ".cjs")) {
+  if (
+    fs["existsSync"](yarnPnpCandidate + ".js") ||
+    fs["existsSync"](yarnPnpCandidate + ".cjs")
+  ) {
     try {
       const m = externalRequire("module");
       const createRequire = m["createRequire"] || m["createRequireFromPath"];
@@ -212,7 +213,7 @@ function getYarnPnpifyedLocalPrettier(directory) {
         externalRequire(yarnPnpCandidate)["setup"]();
       }
       const targetRequire = createRequire(yarnPnpCandidate);
-      return targetRequire(targetRequire["resolve"]('prettier'));
+      return targetRequire(targetRequire["resolve"]("prettier"));
     } catch (e) {
       if (e.code === "ENOENT") return null;
       throw e;
@@ -236,8 +237,8 @@ function getPrettierForDirectory(directory) {
   if (cached) return cached;
 
   if (fs["existsSync"](path["join"](directory, "package.json"))) {
-    const prettier = getLocalPrettier(directory) ||
-      getYarnPnpifyedLocalPrettier(directory);
+    const prettier =
+      getLocalPrettier(directory) || getYarnPnpifyedLocalPrettier(directory);
     if (prettier) {
       prettierCache.set(directory, prettier);
       return prettier;
@@ -248,7 +249,7 @@ function getPrettierForDirectory(directory) {
   if (parent !== directory) {
     return getPrettierForDirectory(parent);
   } else {
-    const prettier = getGlobalPrettier()
+    const prettier = getGlobalPrettier();
     prettierCache.set(directory, prettier);
     return prettier;
   }
@@ -295,7 +296,7 @@ function bestParser(prettier, parsers, options, filepath) {
           .getSupportInfo()
           ["languages"].reduce((accu, lang) => accu.concat(lang["parsers"]), [])
       : [];
-    const result = parsers.find(parser => supportedParsers.includes(parser));
+    const result = parsers.find((parser) => supportedParsers.includes(parser));
     if (result) {
       return result;
     }
@@ -322,7 +323,7 @@ function bestParser(prettier, parsers, options, filepath) {
         createResponseHeader("E", errBuf.length),
         errBuf,
         newline,
-        Z
+        Z,
       ])
     );
   }
@@ -344,7 +345,7 @@ function bestParser(prettier, parsers, options, filepath) {
       const prettier = getPrettierForPath(filepath);
       if (filepath.length > 0) {
         prettier.resolveConfig.sync(filepath, {
-          editorconfig
+          editorconfig,
         });
       }
     } catch (e) {
@@ -401,7 +402,7 @@ function bestParser(prettier, parsers, options, filepath) {
       if (path["isAbsolute"](filepath)) {
         options =
           prettier.resolveConfig.sync(filepath, {
-            editorconfig
+            editorconfig,
           }) || {};
       }
 
@@ -461,11 +462,18 @@ function bestParser(prettier, parsers, options, filepath) {
             }
             break;
           case -1:
-            out.push(createResponseHeader("D", punycode['ucs2']['decode'](str).length));
+            out.push(
+              createResponseHeader("D", punycode["ucs2"]["decode"](str).length)
+            );
             break;
           case 0:
             if (index < diffResult.length - 1) {
-              out.push(createResponseHeader("M", punycode['ucs2']['decode'](str).length));
+              out.push(
+                createResponseHeader(
+                  "M",
+                  punycode["ucs2"]["decode"](str).length
+                )
+              );
             }
         }
       }
@@ -524,10 +532,10 @@ function bestParser(prettier, parsers, options, filepath) {
         prettier.resolveConfig.sync(filepath, { editorconfig }) || {};
 
       let optionsStr;
-      options["parser"] = function(_text, _parsers, options) {
+      options["parser"] = function (_text, _parsers, options) {
         optionsStr = JSON.stringify({
           ["versions"]: Object.assign({}, process["versions"], {
-            ["prettier"]: prettier.version
+            ["prettier"]: prettier.version,
           }),
           ["options"]: options,
           ["bestParser"]: bestParser(
@@ -535,7 +543,7 @@ function bestParser(prettier, parsers, options, filepath) {
             parsers,
             options,
             inferParser ? filepath : null
-          )
+          ),
         });
         return { type: "NullLiteral" };
       };
@@ -548,7 +556,7 @@ function bestParser(prettier, parsers, options, filepath) {
           createResponseHeader("O", optionsBuf.length),
           optionsBuf,
           newline,
-          Z
+          Z,
         ])
       );
     } catch (e) {
@@ -581,7 +589,7 @@ function bestParser(prettier, parsers, options, filepath) {
    * all data received so far to `handlePacket`.
    */
   const buffers = [];
-  process.stdin["on"]("data", slice => {
+  process.stdin["on"]("data", (slice) => {
     while (slice.length > 0) {
       const lastBuffer =
         buffers.length > 0 ? buffers[buffers.length - 1] : null;

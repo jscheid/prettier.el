@@ -26,7 +26,7 @@ Install from a [tarball](https://github.com/jscheid/prettier.el/releases/) or
 via [quelpa](https://github.com/quelpa/quelpa):
 
     (quelpa '(prettier :fetcher github
-                       :repo "jscheid/prettier-el"
+                       :repo "jscheid/prettier.el"
                        :branch "release"
                        :files (:defaults "*.js" "*.base64")
                        :version-regexp "^release-\\(.*\\)"))

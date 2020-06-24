@@ -6,7 +6,7 @@ actions. From there it can be installed using Quelpa with the
 following command:
 
     (quelpa '(prettier :fetcher github
-                       :repo "jscheid/prettier-el"
+                       :repo "jscheid/prettier.el"
                        :branch "release"
                        :files (:defaults "*.js" "*.base64")
                        :version-regexp "^release-\\(.*\\)"))

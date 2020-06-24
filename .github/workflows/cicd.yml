@@ -108,7 +108,7 @@ jobs:
 
       - name: Unpack tarball
         run: |
-          tar xf prettier.tar --one-top-level=dist
+          tar xf prettier.tar --one-top-level=dist --exclude=prettier-pkg.el
 
       - name: Get commit message
         run: |

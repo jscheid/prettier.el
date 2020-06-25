@@ -6,7 +6,8 @@
   "license": "GPLv3+",
   "devDependencies": {
     "closurecompiler-externs": "^1.0.4",
-    "diff-match-patch": "^1.0.4"
+    "diff-match-patch": "^1.0.4",
+    "prettier": "^2.0.0"
   },
   "dependencies": {
     "google-closure-compiler": "^20181028.0.1",

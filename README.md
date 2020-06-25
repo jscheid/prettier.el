@@ -218,6 +218,11 @@ Prettier version used for the buffer.
 This package is heavily inspired by the original package that integrated
 Prettier into Emacs, `prettier-emacs`.
 
+## Building from source
+
+See `HACKING.md` for build instructions and `RELEASING.md` for information about
+the release process.
+
 ## License
 
 © Copyright 2018-present Julian Scheid

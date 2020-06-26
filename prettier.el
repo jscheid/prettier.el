@@ -686,7 +686,7 @@ Prettier parser name) or nil when nothing was selected."
               "Prettier parser (%s): "
               default)
            "Prettier parser (infer): ")
-         (mapcar (apply-partially 'nth 3)
+         (mapcar (apply-partially #'nth 3)
                  (cdr (get 'prettier-enabled-parsers
                            'custom-type)))  ; collection
          nil                                ; predicate
@@ -946,15 +946,15 @@ close to post-formatting as possible."
 
          prettier-previous-local-settings
          (seq-filter
-          'identity
+          #'identity
           (apply
-           'append
+           #'append
            (mapcar
             (lambda (setting)
               (let* ((vars (nth 0 setting))
                      (source (nth 1 setting))
                      (value (funcall
-                             (or (nth 2 setting) 'identity)
+                             (or (nth 2 setting) #'identity)
                              (if (keywordp source)
                                  (plist-get prettier-config-cache
                                             source)

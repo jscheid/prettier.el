@@ -566,7 +566,7 @@ IDENTIFICATION and CONNECTED have the same meaning as
               identification
               connected)))
 
-(defun prettier-el--version ()
+(defun prettier--pkg-version ()
   "Return the version of the `prettier' package."
   (package-version-join
    (package-desc-version
@@ -589,7 +589,7 @@ should be used when filing bug reports."
   (let ((info
          (list
           :emacs-version (emacs-version)
-          :prettier-el-version (prettier-el--version)
+          :prettier-el-version (prettier--pkg-version)
           :buffer-file-name buffer-file-name
           :remote-id (prettier--buffer-remote-p)
           :major-mode major-mode

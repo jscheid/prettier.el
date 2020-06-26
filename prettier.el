@@ -1092,6 +1092,57 @@ PROCESS-BUFFER is the process buffer."
            (base64-decode-region 1 (point))
            (buffer-string))))))))
 
+(defun prettier--maybe-show-benchmark (start-time end-time timestamps)
+  "If so configured, show timing information for the last operation.
+
+START-TIME and END-TIME give the total time of the operation, and
+TIMESTAMPS is additional information received from the server."
+  (when prettier-show-benchmark-flag
+    (let ((total (float-time (time-subtract end-time start-time)))
+          (prettier (- (nth 1 timestamps)
+                       (nth 0 timestamps))))
+      (prettier--delayed-message
+       "Prettier format took %.1fms + %.1fms"
+       (* prettier 1000)
+       (* (- total prettier) 1000)))))
+
+(defun prettier--format-iter (parsers
+                              relative-point
+                              filename
+                              tempfile)
+  "Launch format operation remotely and return iterator.
+
+PARSERS are the enabled parsers, RELATIVE-POINT the location of
+point relative to the start of region.  FILENAME is the original
+filename and TEMPFILE is where the buffer contents before
+formatting are stored."
+  (prettier--request-iter
+   (prettier--get-process)
+   (list
+    "f"
+    (if prettier-editorconfig-flag "E" "e")
+    (if prettier-infer-parser-flag "I" "i")
+    filename
+    "\n" (if parsers
+             (string-join
+              (mapcar #'symbol-name parsers)
+              ",")
+           "-")
+    "\n" (format "%X" (or relative-point 1))
+    "\n" (prettier--pick-localname tempfile)
+    "\n\n")))
+
+(defun prettier--payload (process-buf command)
+  "Return the payload string for the given COMMAND.
+
+PROCESS-BUF is the process buffer in which the command was
+received."
+  (let ((range (cdr command)))
+    (base64-decode-string
+     (with-current-buffer process-buf
+       (buffer-substring-no-properties (nth 0 range)
+                                       (nth 1 range))))))
+
 (defun prettier--prettify (&optional
                            parsers
                            start
@@ -1101,8 +1152,7 @@ PROCESS-BUFFER is the process buffer."
 The first supported parser in PARSERS will be used for
 formatting."
   (let* ((start-time (current-time))
-         (prettier-process (prettier--get-process))
-         (process-buf (process-buffer prettier-process))
+         (process-buf (process-buffer (prettier--get-process)))
          (start-point (copy-marker (or start (point-min)) nil))
          (end-point (copy-marker (or end (point-max)) t))
          (point-before (point))
@@ -1116,21 +1166,10 @@ formatting."
          any-errors
          timestamps
          (buffer-undo-list-backup buffer-undo-list)
-         (iter (prettier--request-iter
-                prettier-process
-                (list
-                 "f"
-                 (if prettier-editorconfig-flag "E" "e")
-                 (if prettier-infer-parser-flag "I" "i")
-                 filename
-                 "\n" (if parsers
-                          (string-join
-                           (mapcar #'symbol-name parsers)
-                           ",")
-                        "-")
-                 "\n" (format "%X" (or relative-point 1))
-                 "\n" (prettier--pick-localname tempfile)
-                 "\n\n"))))
+         (iter (prettier--format-iter parsers
+                                      relative-point
+                                      filename
+                                      tempfile)))
     (unwind-protect
         (when (< start-point end-point)
           (let ((write-region-inhibit-fsync t)
@@ -1148,11 +1187,7 @@ formatting."
                   (let ((kind (car command))
                         (command-str
                          (lambda ()
-                           (base64-decode-string
-                            (with-current-buffer process-buf
-                              (buffer-substring-no-properties
-                               (nth 0 (cdr command))
-                               (nth 1 (cdr command))))))))
+                           (prettier--payload process-buf command))))
                     (cond
                      ((eq kind ?M)
                       (forward-char (cdr command)))
@@ -1171,26 +1206,21 @@ formatting."
                       (setq any-errors t)
                       (prettier--show-remote-error
                        filename
-                       (with-temp-buffer
-                         (insert (with-current-buffer process-buf
-                                   (buffer-substring-no-properties
-                                    (nth 0 (cdr command))
-                                    (nth 1 (cdr command)))))
-                         (base64-decode-region 1 (point))
-                         (buffer-string))))
+                       (prettier--payload process-buf command)))
 
                      ((eq kind ?P)
                       (when (and (null start) (null end))
                         (setq prettier-last-parser
                               (funcall command-str))))
+
                      ((eq kind ?V)
                       (setq prettier-version (funcall command-str)))
+
                      ((eq kind ?C)
                       (when relative-point
-                        (setq result-point
-                              (if point-end-p
-                                  (point-max)
-                                (cdr command)))))))))
+                        (setq result-point (if point-end-p
+                                               (point-max)
+                                             (cdr command)))))))))
             ((quit error)
              (ignore-errors
                (setq any-errors t)
@@ -1204,17 +1234,11 @@ formatting."
 
           (unless any-errors
             (prettier--clear-errors)
-            (when result-point
-              (goto-char result-point)))
-          (when prettier-show-benchmark-flag
-            (let ((total (float-time (time-subtract (current-time)
-                                                    start-time)))
-                  (prettier (- (nth 1 timestamps)
-                               (nth 0 timestamps))))
-              (prettier--delayed-message
-               "Prettier format took %.1fms + %.1fms"
-               (* prettier 1000)
-               (* (- total prettier) 1000)))))
+            (when result-point (goto-char result-point)))
+
+          (prettier--maybe-show-benchmark start-time
+                                          (current-time)
+                                          timestamps))
       (iter-close iter)
       (delete-file tempfile))))
 

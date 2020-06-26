@@ -360,14 +360,13 @@ function bestParser(prettier, parsers, options, filepath) {
    * @param {!Buffer} packet
    */
   function handleFormat(packet) {
-    const stripTrailing = packet[1] === "S".charCodeAt(0);
-    const editorconfig = packet[2] === "E".charCodeAt(0);
-    const inferParser = packet[3] === "I".charCodeAt(0);
+    const editorconfig = packet[1] === "E".charCodeAt(0);
+    const inferParser = packet[2] === "I".charCodeAt(0);
     const newlineIndex1 = packet.indexOf(10);
     if (newlineIndex1 < 0) {
       protocolError();
     }
-    const filepath = packet.toString("utf-8", 4, newlineIndex1);
+    const filepath = packet.toString("utf-8", 3, newlineIndex1);
     const newlineIndex2 = packet.indexOf(10, newlineIndex1 + 1);
     if (newlineIndex2 < 0) {
       protocolError();
@@ -447,12 +446,8 @@ function bestParser(prettier, parsers, options, filepath) {
         switch (kind) {
           case 1:
             {
-              const insertStr =
-                stripTrailing && index === diffResult.length - 1
-                  ? str.replace(/[ \n]+$/g, "")
-                  : str;
-              if (insertStr.length > 0) {
-                const strBuf = createBase64Buffer(insertStr);
+              if (str.length > 0) {
+                const strBuf = createBase64Buffer(str);
                 out.push(
                   createResponseHeader("I", strBuf.length),
                   strBuf,

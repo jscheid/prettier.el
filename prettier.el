@@ -1095,9 +1095,7 @@ PROCESS-BUFFER is the process buffer."
 (defun prettier--prettify (&optional
                            parsers
                            start
-                           end
-                           indent-str
-                           strip-trailing-p)
+                           end)
   "Format the current buffer from START to END.
 
 The first supported parser in PARSERS will be used for
@@ -1122,7 +1120,6 @@ formatting."
                 prettier-process
                 (list
                  "f"
-                 (if strip-trailing-p "S" "s")
                  (if prettier-editorconfig-flag "E" "e")
                  (if prettier-infer-parser-flag "I" "i")
                  filename
@@ -1208,16 +1205,7 @@ formatting."
           (unless any-errors
             (prettier--clear-errors)
             (when result-point
-              (goto-char result-point))
-            (when indent-str
-              (save-excursion
-                (goto-char start-point)
-                (forward-line)
-                (beginning-of-line)
-                (while (< (point) end-point)
-                  (insert indent-str)
-                  (forward-line)
-                  (beginning-of-line)))))
+              (goto-char result-point)))
           (when prettier-show-benchmark-flag
             (let ((total (float-time (time-subtract (current-time)
                                                     start-time)))

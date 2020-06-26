@@ -480,7 +480,8 @@ For debugging and performance tuning only.")
 
 (defvar prettier-processes (make-hash-table :test 'equal)
   "Keep track of running node processes, keyed by `node-command'.
-It's the name or path of the node executable `prettier--find-node' returns.")
+It's the name or path of the node executable `prettier--find-node'
+returns.")
 
 (defvar prettier-nvm-node-command-cache nil
   "Cache for the result of `prettier--node-from-nvm'.")
@@ -571,8 +572,8 @@ IDENTIFICATION and CONNECTED have the same meaning as
    (package-desc-version
     (with-temp-buffer
       (let ((src (or
-                  ;; load-file-name seemed like it would be useful here,
-                  ;; but didn't work in practice.
+                  ;; load-file-name seemed like it would be useful
+                  ;; here, but didn't work in practice.
                   (locate-library "prettier.el")
                   ;; This one shouldn't be needed:
                   (concat prettier-el-home "/prettier.el"))))
@@ -717,7 +718,8 @@ with Prettier) and returning a response.
 
 SERVER-ID should be the symbol `local' for launching a local
 process, or a remote identification as defined by `tramp-mode'
-when launching a remote process.  Each process is started with NODE-COMMAND.
+when launching a remote process.  Each process is started with
+NODE-COMMAND.
 
 The process is launched by running `node' with a minified version
 of `bootstrap.js` as a script provided on the command line; this
@@ -830,7 +832,8 @@ otherwise, launch a new one."
                    (or existing-live-process
                        (puthash
                         node-command
-                        (prettier--create-process server-id node-command)
+                        (prettier--create-process server-id
+                                                  node-command)
                         prettier-processes))))
               (when warmup-p
                 (prettier--request-iter
@@ -1283,7 +1286,8 @@ otherwise the remote identification as defined by `tramp-mode'."
   (or (and (tramp-tramp-file-p file)
            (save-match-data
              (and (string-match tramp-file-name-regexp file)
-                  (match-string (nth 4 tramp-file-name-structure) file))))
+                  (match-string (nth 4 tramp-file-name-structure)
+                                file))))
       file))
 
 (defun prettier--parsers ()

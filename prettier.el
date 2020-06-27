@@ -1132,14 +1132,14 @@ formatting are stored."
     "\n" (prettier--pick-localname tempfile)
     "\n\n")))
 
-(defun prettier--payload (process-buf command)
+(defun prettier--payload (process-buffer command)
   "Return the payload string for the given COMMAND.
 
-PROCESS-BUF is the process buffer in which the command was
+PROCESS-BUFFER is the process buffer in which the command was
 received."
   (let ((range (cdr command)))
     (base64-decode-string
-     (with-current-buffer process-buf
+     (with-current-buffer process-buffer
        (buffer-substring-no-properties (nth 0 range)
                                        (nth 1 range))))))
 

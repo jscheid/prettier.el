@@ -110,7 +110,12 @@ jobs:
 
       - name: Unpack tarball
         run: |
-          tar xf prettier.tar --strip-components=1 --exclude=prettier-pkg.el
+          set -eou pipefail
+          mkdir -p dist
+          tar xf prettier.tar \
+            --strip-components=1 \
+            --exclude=prettier-pkg.el \
+            --directory=dist
 
       - name: Get commit message
         run: |

@@ -1,6 +1,7 @@
 /dist/
 /build/
 /.vagrant/
+/sandbox/
 /README
 node_modules/
 *.tar

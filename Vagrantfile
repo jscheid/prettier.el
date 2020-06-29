@@ -22,9 +22,10 @@ Vagrant.configure('2') do |config|
   config.vm.box = 'ubuntu/bionic64'
   config.vm.provision 'shell', privileged: true, inline: <<-SHELL
     set -eou pipefail
+    add-apt-repository ppa:kelleyk/emacs
     apt-get update
     curl --location --silent https://deb.nodesource.com/setup_10.x | sudo -E bash -
-    apt-get install -y aspell python3 python3-setuptools texinfo python3-pip emacs nodejs
+    apt-get install -y aspell python3 python3-setuptools texinfo python3-pip emacs26 nodejs
     curl --location --remote-name --silent \
       https://github.com/jgm/pandoc/releases/download/2.9.2.1/pandoc-2.9.2.1-1-amd64.deb
     dpkg --install pandoc-2.9.2.1-1-amd64.deb

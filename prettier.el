@@ -480,7 +480,8 @@ For debugging and performance tuning only.")
 
 (defvar prettier-processes (make-hash-table :test 'equal)
   "Keep track of running node processes, keyed by `node-command'.
-It's the name or path of the node executable `prettier--find-node' returns.")
+It's the name or path of the node executable `prettier--find-node'
+returns.")
 
 (defvar prettier-nvm-node-command-cache nil
   "Cache for the result of `prettier--node-from-nvm'.")
@@ -565,14 +566,14 @@ IDENTIFICATION and CONNECTED have the same meaning as
               identification
               connected)))
 
-(defun prettier-el--version ()
+(defun prettier--pkg-version ()
   "Return the version of the `prettier' package."
   (package-version-join
    (package-desc-version
     (with-temp-buffer
       (let ((src (or
-                  ;; load-file-name seemed like it would be useful here,
-                  ;; but didn't work in practice.
+                  ;; load-file-name seemed like it would be useful
+                  ;; here, but didn't work in practice.
                   (locate-library "prettier.el")
                   ;; This one shouldn't be needed:
                   (concat prettier-el-home "/prettier.el"))))
@@ -588,7 +589,7 @@ should be used when filing bug reports."
   (let ((info
          (list
           :emacs-version (emacs-version)
-          :prettier-el-version (prettier-el--version)
+          :prettier-el-version (prettier--pkg-version)
           :buffer-file-name buffer-file-name
           :remote-id (prettier--buffer-remote-p)
           :major-mode major-mode
@@ -686,7 +687,7 @@ Prettier parser name) or nil when nothing was selected."
               "Prettier parser (%s): "
               default)
            "Prettier parser (infer): ")
-         (mapcar (apply-partially 'nth 3)
+         (mapcar (apply-partially #'nth 3)
                  (cdr (get 'prettier-enabled-parsers
                            'custom-type)))  ; collection
          nil                                ; predicate
@@ -717,7 +718,8 @@ with Prettier) and returning a response.
 
 SERVER-ID should be the symbol `local' for launching a local
 process, or a remote identification as defined by `tramp-mode'
-when launching a remote process.  Each process is started with NODE-COMMAND.
+when launching a remote process.  Each process is started with
+NODE-COMMAND.
 
 The process is launched by running `node' with a minified version
 of `bootstrap.js` as a script provided on the command line; this
@@ -830,7 +832,8 @@ otherwise, launch a new one."
                    (or existing-live-process
                        (puthash
                         node-command
-                        (prettier--create-process server-id node-command)
+                        (prettier--create-process server-id
+                                                  node-command)
                         prettier-processes))))
               (when warmup-p
                 (prettier--request-iter
@@ -946,15 +949,15 @@ close to post-formatting as possible."
 
          prettier-previous-local-settings
          (seq-filter
-          'identity
+          #'identity
           (apply
-           'append
+           #'append
            (mapcar
             (lambda (setting)
               (let* ((vars (nth 0 setting))
                      (source (nth 1 setting))
                      (value (funcall
-                             (or (nth 2 setting) 'identity)
+                             (or (nth 2 setting) #'identity)
                              (if (keywordp source)
                                  (plist-get prettier-config-cache
                                             source)
@@ -1089,19 +1092,67 @@ PROCESS-BUFFER is the process buffer."
            (base64-decode-region 1 (point))
            (buffer-string))))))))
 
+(defun prettier--maybe-show-benchmark (start-time end-time timestamps)
+  "If so configured, show timing information for the last operation.
+
+START-TIME and END-TIME give the total time of the operation, and
+TIMESTAMPS is additional information received from the server."
+  (when prettier-show-benchmark-flag
+    (let ((total (float-time (time-subtract end-time start-time)))
+          (prettier (- (nth 1 timestamps)
+                       (nth 0 timestamps))))
+      (prettier--delayed-message
+       "Prettier format took %.1fms + %.1fms"
+       (* prettier 1000)
+       (* (- total prettier) 1000)))))
+
+(defun prettier--format-iter (parsers
+                              relative-point
+                              filename
+                              tempfile)
+  "Launch format operation remotely and return iterator.
+
+PARSERS are the enabled parsers, RELATIVE-POINT the location of
+point relative to the start of region.  FILENAME is the original
+filename and TEMPFILE is where the buffer contents before
+formatting are stored."
+  (prettier--request-iter
+   (prettier--get-process)
+   (list
+    "f"
+    (if prettier-editorconfig-flag "E" "e")
+    (if prettier-infer-parser-flag "I" "i")
+    filename
+    "\n" (if parsers
+             (string-join
+              (mapcar #'symbol-name parsers)
+              ",")
+           "-")
+    "\n" (format "%X" (or relative-point 1))
+    "\n" (prettier--pick-localname tempfile)
+    "\n\n")))
+
+(defun prettier--payload (process-buffer command)
+  "Return the payload string for the given COMMAND.
+
+PROCESS-BUFFER is the process buffer in which the command was
+received."
+  (let ((range (cdr command)))
+    (base64-decode-string
+     (with-current-buffer process-buffer
+       (buffer-substring-no-properties (nth 0 range)
+                                       (nth 1 range))))))
+
 (defun prettier--prettify (&optional
                            parsers
                            start
-                           end
-                           indent-str
-                           strip-trailing-p)
+                           end)
   "Format the current buffer from START to END.
 
 The first supported parser in PARSERS will be used for
 formatting."
   (let* ((start-time (current-time))
-         (prettier-process (prettier--get-process))
-         (process-buf (process-buffer prettier-process))
+         (process-buf (process-buffer (prettier--get-process)))
          (start-point (copy-marker (or start (point-min)) nil))
          (end-point (copy-marker (or end (point-max)) t))
          (point-before (point))
@@ -1115,22 +1166,10 @@ formatting."
          any-errors
          timestamps
          (buffer-undo-list-backup buffer-undo-list)
-         (iter (prettier--request-iter
-                prettier-process
-                (list
-                 "f"
-                 (if strip-trailing-p "S" "s")
-                 (if prettier-editorconfig-flag "E" "e")
-                 (if prettier-infer-parser-flag "I" "i")
-                 filename
-                 "\n" (if parsers
-                          (string-join
-                           (mapcar #'symbol-name parsers)
-                           ",")
-                        "-")
-                 "\n" (format "%X" (or relative-point 1))
-                 "\n" (prettier--pick-localname tempfile)
-                 "\n\n"))))
+         (iter (prettier--format-iter parsers
+                                      relative-point
+                                      filename
+                                      tempfile)))
     (unwind-protect
         (when (< start-point end-point)
           (let ((write-region-inhibit-fsync t)
@@ -1148,11 +1187,7 @@ formatting."
                   (let ((kind (car command))
                         (command-str
                          (lambda ()
-                           (base64-decode-string
-                            (with-current-buffer process-buf
-                              (buffer-substring-no-properties
-                               (nth 0 (cdr command))
-                               (nth 1 (cdr command))))))))
+                           (prettier--payload process-buf command))))
                     (cond
                      ((eq kind ?M)
                       (forward-char (cdr command)))
@@ -1171,26 +1206,21 @@ formatting."
                       (setq any-errors t)
                       (prettier--show-remote-error
                        filename
-                       (with-temp-buffer
-                         (insert (with-current-buffer process-buf
-                                   (buffer-substring-no-properties
-                                    (nth 0 (cdr command))
-                                    (nth 1 (cdr command)))))
-                         (base64-decode-region 1 (point))
-                         (buffer-string))))
+                       (prettier--payload process-buf command)))
 
                      ((eq kind ?P)
                       (when (and (null start) (null end))
                         (setq prettier-last-parser
                               (funcall command-str))))
+
                      ((eq kind ?V)
                       (setq prettier-version (funcall command-str)))
+
                      ((eq kind ?C)
                       (when relative-point
-                        (setq result-point
-                              (if point-end-p
-                                  (point-max)
-                                (cdr command)))))))))
+                        (setq result-point (if point-end-p
+                                               (point-max)
+                                             (cdr command)))))))))
             ((quit error)
              (ignore-errors
                (setq any-errors t)
@@ -1204,26 +1234,11 @@ formatting."
 
           (unless any-errors
             (prettier--clear-errors)
-            (when result-point
-              (goto-char result-point))
-            (when indent-str
-              (save-excursion
-                (goto-char start-point)
-                (forward-line)
-                (beginning-of-line)
-                (while (< (point) end-point)
-                  (insert indent-str)
-                  (forward-line)
-                  (beginning-of-line)))))
-          (when prettier-show-benchmark-flag
-            (let ((total (float-time (time-subtract (current-time)
-                                                    start-time)))
-                  (prettier (- (nth 1 timestamps)
-                               (nth 0 timestamps))))
-              (prettier--delayed-message
-               "Prettier format took %.1fms + %.1fms"
-               (* prettier 1000)
-               (* (- total prettier) 1000)))))
+            (when result-point (goto-char result-point)))
+
+          (prettier--maybe-show-benchmark start-time
+                                          (current-time)
+                                          timestamps))
       (iter-close iter)
       (delete-file tempfile))))
 
@@ -1283,7 +1298,8 @@ otherwise the remote identification as defined by `tramp-mode'."
   (or (and (tramp-tramp-file-p file)
            (save-match-data
              (and (string-match tramp-file-name-regexp file)
-                  (match-string (nth 4 tramp-file-name-structure) file))))
+                  (match-string (nth 4 tramp-file-name-structure)
+                                file))))
       file))
 
 (defun prettier--parsers ()

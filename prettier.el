@@ -22,7 +22,7 @@
 ;; General Public License for more details.
 ;;
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -621,7 +621,7 @@ should be used when filing bug reports."
   :lighter prettier-lighter
   (if prettier-mode
       (progn
-        (when (not (eq prettier-pre-warm 'none))
+        (unless (eq prettier-pre-warm 'none)
           (prettier--get-process
            (eq prettier-pre-warm 'full)))
         (when prettier-mode-sync-config-flag
@@ -652,7 +652,7 @@ should be used when filing bug reports."
                          prettier-mode-ignore-buffer-function)))
                (prettier--parsers))
       (with-temp-message
-          (when (not (eq prettier-pre-warm 'none))
+          (unless (eq prettier-pre-warm 'none)
             "Prettier pre-warming...")
         (prettier-mode))))
   :group 'prettier)

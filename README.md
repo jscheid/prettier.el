@@ -1,6 +1,6 @@
 # prettier.el
 
-![CI](https://github.com/jscheid/prettier.el/workflows/CI/badge.svg)
+![CI](https://github.com/jscheid/prettier.el/workflows/CI/badge.svg) [![MELPA](https://melpa.org/packages/prettier-badge.svg)](https://melpa.org/#/prettier)
 
 The `prettier` Emacs package reformats your code by running
 [Prettier](https://github.com/prettier/prettier) with minimal overhead,
@@ -22,14 +22,8 @@ package can be found at
 
 ## Installation
 
-Install from a [tarball](https://github.com/jscheid/prettier.el/releases/) or
-via [quelpa](https://github.com/quelpa/quelpa):
-
-    (quelpa '(prettier :fetcher github
-                       :repo "jscheid/prettier.el"
-                       :branch "release"
-                       :files (:defaults "*.js" "*.base64")
-                       :version-regexp "^release-\\(.*\\)"))
+Install from [MELPA](https://melpa.org/#/prettier), for example
+with `M-x package-install RET prettier RET`.
 
 A `node` executable needs to be on `exec-path`. It is recommended to
 provide a recent version of Node since older versions tend to be

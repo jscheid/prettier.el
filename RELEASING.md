@@ -2,14 +2,7 @@
 
 Anything merged into the `master` branch will be deployed
 automatically ("continuously") to branch `release` via Github
-actions. From there it can be installed using Quelpa with the
-following command:
-
-    (quelpa '(prettier :fetcher github
-                       :repo "jscheid/prettier.el"
-                       :branch "release"
-                       :files (:defaults "*.js" "*.base64")
-                       :version-regexp "^release-\\(.*\\)"))
+actions, from where it will be picked up by MELPA.
 
 ## Tagged releases
 

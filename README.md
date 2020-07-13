@@ -44,6 +44,18 @@ found.
 The above instructions are for reformatting local files; see below for
 how to configure remote systems.
 
+### Troubleshooting
+
+If you see the error `Cannot find prettier anywhere` even though Prettier is
+installed globally, you might be using `node` installed via `snap` on Ubuntu.
+When installed using this method, `node` is unable to find globally installed
+packages. This can be worked around by setting `NODE_PATH` explicitly, for
+example:
+
+```elisp
+(setenv "NODE_PATH" "/usr/local/lib/node_modules")
+```
+
 ## Configuration
 
 Use `M-x global-prettier-mode` to turn on the minor mode in all major

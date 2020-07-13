@@ -167,7 +167,9 @@ function getGlobalPrettier() {
   if (globalPrettier) {
     return globalPrettier;
   } else {
-    throw new Error("Cannot find prettier anywhere");
+    throw new Error(
+      "Cannot find prettier anywhere, check troubleshooting instructions."
+    );
   }
 }
 

@@ -70,6 +70,24 @@ found.
 The above instructions are for reformatting local files; see below for
 how to configure remote systems.
 
+* Menu:
+
+* Troubleshooting::
+
+
+File: prettier.info,  Node: Troubleshooting,  Up: Installation
+
+1.1 Troubleshooting
+===================
+
+If you see the error ‘Cannot find prettier anywhere’ even though
+Prettier is installed globally, you might be using ‘node’ installed via
+‘snap’ on Ubuntu.  When installed using this method, ‘node’ is unable to
+find globally installed packages.  This can be worked around by setting
+‘NODE_PATH’ explicitly, for example:
+
+(setenv "NODE_PATH" "/usr/local/lib/node_modules")
+
 
 File: prettier.info,  Node: Configuration,  Next: Usage,  Prev: Installation,  Up: Top
 
@@ -342,42 +360,44 @@ Tag Table:
 Node: Top196
 Node: Installation1217
 Ref: #installation1336
-Node: Configuration2355
-Ref: #configuration2478
-Node: Enabling per-file / per-directory2980
-Ref: #enabling-per-file-per-directory3142
-Node: Usage4192
-Ref: #usage4300
-Node: Changing Prettier Configuration4883
-Ref: #changing-prettier-configuration5057
-Node: On Remote Servers5387
-Ref: #on-remote-servers5533
-Node: Customization6367
-Ref: #customization6509
-Node: prettier-mode-sync-config-flag6796
-Ref: #prettier-mode-sync-config-flag6992
-Node: prettier-editorconfig-flag7119
-Ref: #prettier-editorconfig-flag7340
-Node: prettier-enabled-parsers7442
-Ref: #prettier-enabled-parsers7655
-Node: prettier-infer-parser-flag7719
-Ref: #prettier-infer-parser-flag7937
-Node: prettier-inline-errors-flag8070
-Ref: #prettier-inline-errors-flag8283
-Node: prettier-pre-warm8496
-Ref: #prettier-pre-warm8699
-Node: prettier-mode-ignore-buffer-function9034
-Ref: #prettier-mode-ignore-buffer-function9269
-Node: prettier-mode-lighter9597
-Ref: #prettier-mode-lighter9776
-Node: Differences from prettier-emacs9950
-Ref: #differences-from-prettier-emacs10138
-Node: Credits11549
-Ref: #credits11688
-Node: Building from source11805
-Ref: #building-from-source11946
-Node: License12057
-Ref: #license12156
+Node: Troubleshooting2385
+Ref: #troubleshooting2492
+Node: Configuration2884
+Ref: #configuration3007
+Node: Enabling per-file / per-directory3509
+Ref: #enabling-per-file-per-directory3671
+Node: Usage4721
+Ref: #usage4829
+Node: Changing Prettier Configuration5412
+Ref: #changing-prettier-configuration5586
+Node: On Remote Servers5916
+Ref: #on-remote-servers6062
+Node: Customization6896
+Ref: #customization7038
+Node: prettier-mode-sync-config-flag7325
+Ref: #prettier-mode-sync-config-flag7521
+Node: prettier-editorconfig-flag7648
+Ref: #prettier-editorconfig-flag7869
+Node: prettier-enabled-parsers7971
+Ref: #prettier-enabled-parsers8184
+Node: prettier-infer-parser-flag8248
+Ref: #prettier-infer-parser-flag8466
+Node: prettier-inline-errors-flag8599
+Ref: #prettier-inline-errors-flag8812
+Node: prettier-pre-warm9025
+Ref: #prettier-pre-warm9228
+Node: prettier-mode-ignore-buffer-function9563
+Ref: #prettier-mode-ignore-buffer-function9798
+Node: prettier-mode-lighter10126
+Ref: #prettier-mode-lighter10305
+Node: Differences from prettier-emacs10479
+Ref: #differences-from-prettier-emacs10667
+Node: Credits12078
+Ref: #credits12217
+Node: Building from source12334
+Ref: #building-from-source12475
+Node: License12586
+Ref: #license12685
 
 End Tag Table
 

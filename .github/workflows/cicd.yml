@@ -148,7 +148,7 @@ jobs:
           )
           if [ "$response_code" == '404' ]; then
             echo "version=${version}" >> $GITHUB_ENV
-            echo "master_tag_name=v${version}>> $GITHUB_ENV
+            echo "master_tag_name=v${version}" >> $GITHUB_ENV
             echo "release_tag_name=release-${version}" >> $GITHUB_ENV
             echo "tag_message=Version ${version}" >> $GITHUB_ENV
           fi

@@ -54,7 +54,7 @@ jobs:
       - name: Initialize sandbox
         run: |
           SANDBOX_DIR=$(mktemp -d) || exit 1
-          echo ::set-env name=SANDBOX_DIR::$SANDBOX_DIR
+          echo "SANDBOX_DIR=$SANDBOX_DIR" >> $GITHUB_ENV
           ./makem.sh -vv --sandbox=$SANDBOX_DIR --install-deps --install-linters
 
       # The "all" rule is not used, because it treats compilation warnings
@@ -80,7 +80,7 @@ jobs:
       - name: Set version suffix for PRs
         if: github.event_name == 'pull_request'
         run: |
-          echo ::set-env name=VERSION_SUFFIX::-4
+          echo "VERSION_SUFFIX=-4" >> $GITHUB_ENV
 
       - name: Build and Test
         if: always() # Run test even if linting fails.
@@ -120,7 +120,7 @@ jobs:
       - name: Get commit message
         run: |
           set -eou pipefail
-          echo ::set-env name=commit_message::$(
+          echo commit_message=$(
             curl \
               --silent \
               --show-error \
@@ -128,7 +128,7 @@ jobs:
               --header "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
               "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}" \
             | jq --raw-output .commit.message
-          )
+          ) >> $GITHUB_ENV
 
       - name: Get configuration
         run: |
@@ -147,10 +147,10 @@ jobs:
               "https://api.github.com/repos/${{ github.repository }}/git/ref/tags/v${version}"
           )
           if [ "$response_code" == '404' ]; then
-            echo ::set-env name=version::${version}
-            echo ::set-env name=master_tag_name::v${version}
-            echo ::set-env name=release_tag_name::release-${version}
-            echo ::set-env name=tag_message::"Version ${version}"
+            echo "version=${version}" >> $GITHUB_ENV
+            echo "master_tag_name=v${version}>> $GITHUB_ENV
+            echo "release_tag_name=release-${version}" >> $GITHUB_ENV
+            echo "tag_message=Version ${version}" >> $GITHUB_ENV
           fi
 
       - name: Deploy

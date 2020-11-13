@@ -152,13 +152,21 @@ function getGlobalPrettier() {
 
   const pathOptions = ["prettier", npmGlobalPath, yarnGlobalPath];
 
+  const globalRequire = createRequire("/");
+
   for (let i = 0; i < pathOptions.length; ++i) {
     if (pathOptions[i]) {
       try {
-        globalPrettier = externalRequire(pathOptions[i]);
+        globalPrettier = globalRequire(pathOptions[i]);
         break;
       } catch (e) {
-        if (!(e instanceof Error) || e["code"] !== "MODULE_NOT_FOUND") {
+        if (
+          !(e instanceof Error) ||
+          !Array.prototype.includes.call(
+            ["MODULE_NOT_FOUND", "QUALIFIED_PATH_RESOLUTION_FAILED"],
+            e.code
+          )
+        ) {
           throw e;
         }
       }
@@ -208,10 +216,15 @@ function tryRequirePrettier(targetRequire) {
   try {
     return targetRequire("prettier");
   } catch (e) {
-    if (e.code === "MODULE_NOT_FOUND" || e.code === "ENOENT") {
+    if (
+      Array.prototype.includes.call(
+        ["MODULE_NOT_FOUND", "UNDECLARED_DEPENDENCY"],
+        e.code
+      )
+    ) {
       return null;
     }
-    throw new Error("first targetRequire failed with " + e.code);
+    throw e;
   }
 }
 

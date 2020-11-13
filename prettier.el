@@ -369,8 +369,11 @@ won't be touched.")
 (defun prettier--guess-js-ish ()
   "Return which parsers to use for a buffer with a JS-like mode."
   (cond
-   ((and (boundp 'tide-mode)
-         tide-mode)
+   ((or (and (boundp 'tide-mode)
+             tide-mode)
+        (and (fboundp 'lsp-buffer-language)
+             (member (lsp-buffer-language)
+                     '("typescript" "typescriptreact"))))
     '(typescript babel flow babel-flow))
    ((and (boundp 'flow-minor-mode)
          flow-minor-mode)
@@ -1313,10 +1316,12 @@ for derived modes.)"
        (lambda (parser)
          (member parser prettier-enabled-parsers))
        (prettier--parsers-for-mode
-        (if (and (fboundp 'mhtml-mode)
-                 (get-text-property (point) 'mhtml-submode))
-            'mhtml-mode
-          major-mode)))))
+        (or (and (fboundp 'mhtml-mode)
+                 (get-text-property (point) 'mhtml-submode)
+                 'mhtml-mode)
+            (and (boundp 'mmm-primary-mode)
+                 mmm-primary-mode)
+            major-mode)))))
 
 (defun prettier--parsers-for-mode (mode)
   "Return a list of parsers for the given major MODE.

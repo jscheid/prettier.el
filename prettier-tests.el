@@ -2,7 +2,7 @@
 
 ;; Copyright (c) 2018-present Julian Scheid
 
-;; Package-Requires: ((web-mode "20200501") (elm-mode "20200406") (pug-mode "20180513") (svelte-mode "20200327") (toml-mode "20161107") (solidity-mode "20200418"))
+;; Package-Requires: ((web-mode "20200501") (elm-mode "20200406") (pug-mode "20180513") (svelte-mode "20200327") (toml-mode "20161107") (solidity-mode "20200418") (vue-mode "20190415") (lsp-mode "20201111") (noflet "20141102") (f "20191110"))
 
 ;;; Commentary:
 
@@ -22,26 +22,33 @@
 (defun prettier--run-test-case (directory)
   "Run prettier test in DIRECTORY."
   (let ((default-directory directory))
-    (shell-command "npm install"))
-  (mapc
-   (lambda (original-file)
-     (let ((actual
-            (with-temp-buffer
-              (insert-file-contents original-file)
-              (setq buffer-file-name original-file)
-              (set-auto-mode)
-              (prettier-prettify)
-              (buffer-string)))
-           (expected
-            (with-temp-buffer
-              (insert-file-contents
-               (replace-regexp-in-string
-                "\\.original\\."
-                ".prettier."
-                original-file))
-              (buffer-string))))
-       (should (equal actual expected))))
-   (directory-files directory t "\\.original\\.")))
+    (shell-command "npm install")
+    (mapc
+     (lambda (original-file)
+       (let ((actual
+              (with-temp-buffer
+                (message "xxx %S" original-file)
+                (insert-file-contents original-file)
+                (setq buffer-file-name original-file)
+                (rename-buffer original-file)
+                (set-auto-mode)
+                (let ((setup-elisp
+                       (concat directory "setup.elisp")))
+                  (when (file-exists-p setup-elisp)
+                    (eval
+                     (f-read-text setup-elisp))))
+                (prettier-prettify)
+                (buffer-string)))
+             (expected
+              (with-temp-buffer
+                (insert-file-contents
+                 (replace-regexp-in-string
+                  "\\.original\\."
+                  ".prettier."
+                  original-file))
+                (buffer-string))))
+         (should (equal actual expected))))
+     (directory-files directory t "\\.original\\."))))
 
 (mapc
  (lambda (test-directory)

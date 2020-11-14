@@ -164,7 +164,7 @@ function getGlobalPrettier() {
           !(e instanceof Error) ||
           !Array.prototype.includes.call(
             ["MODULE_NOT_FOUND", "QUALIFIED_PATH_RESOLUTION_FAILED"],
-            e.code
+            e["code"]
           )
         ) {
           throw e;
@@ -234,24 +234,21 @@ function tryRequirePrettier(targetRequire) {
  * @param {!string} directory  The directory for which to find a local Prettier installation.
  * @return {PrettierAPI}  The Prettier package if found, or null if not found.
  */
-function getLocalPrettier(directory) {
-  const pathToPackageJson = findFileInAncestry(directory, ["package.json"]);
-  if (!pathToPackageJson) {
-    // Not beneath an npm package - bail out
-    return null;
-  }
+function getLocalPrettier(directory) {  
+  const targetRequire = createRequire(path["join"](directory, "package.json"));
 
-  const targetRequire = createRequire(pathToPackageJson);
-
-  // Try loading prettier for non-PnP packages, or if PnP API has already been
-  // loaded.
+  // Try loading prettier for non-PnP packages, or if PnP API has
+  // already been loaded.
   const prettier = tryRequirePrettier(targetRequire);
-  if (prettier || process["versions"]["pnp"]) {
+
+  // If we found prettier, return it.  Also return if we didn't find it,
+  // but we had already setup PnP before
+  if (prettier) {
     return prettier;
   }
 
   // Try finding .pnp.[c]js
-  const pnpJs = findFileInAncestry(path["dirname"](pathToPackageJson), [
+  const pnpJs = findFileInAncestry(directory, [
     ".pnp.js",
     ".pnp.cjs",
   ]);
@@ -261,8 +258,7 @@ function getLocalPrettier(directory) {
   }
 
   // Retry loading prettier after setting up PnP API
-  externalRequire(pnpJs)["setup"]();
-
+  targetRequire(pnpJs)["setup"]();
   return tryRequirePrettier(targetRequire);
 }
 

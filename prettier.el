@@ -504,9 +504,6 @@ parser unless `prettier-infer-parser-flag' is nil.")
 (defvar-local prettier-previous-local-settings nil
   "Used to backup settings so they can be restored later.")
 
-(defvar-local prettier-config-cache nil
-  "Used to memoize Prettier options")
-
 (defvar-local prettier-error-overlay nil
   "Used to remember the last error overlay")
 
@@ -642,7 +639,14 @@ should be used when filing bug reports."
                  'local)
     (remove-hook 'after-change-major-mode-hook
                  #'prettier--maybe-sync-config
-                 'local)))
+                 'local)
+
+    (prettier--revert-synced-config)
+
+    (setq prettier-last-parser nil
+          prettier-last-error-marker nil
+          prettier-version nil
+          prettier-previous-local-settings nil)))
 
 ;;;###autoload
 (define-globalized-minor-mode
@@ -707,8 +711,7 @@ Prettier parser name) or nil when nothing was selected."
 Configuration is synced when `prettier-mode-sync-config-flag' is
 non-nil and `prettier' is enabled in current buffer."
   (when (and prettier-mode
-             prettier-mode-sync-config-flag
-             (null prettier-config-cache))
+             prettier-mode-sync-config-flag)
     (with-temp-message "Prettier syncing config"
       (prettier--sync-config))))
 
@@ -939,11 +942,9 @@ If loaded successfully, uses it to set a variety of buffer-local
 variables in an effort to make pre-formatting indentation etc as
 close to post-formatting as possible."
   (condition-case-unless-debug err
-      (let ((config (prettier--load-config)))
+      (let* ((config (prettier--load-config))
+             (options (plist-get config :options)))
         (setq
-         prettier-config-cache
-         (plist-get config :options)
-
          prettier-last-parser
          (plist-get config :bestParser)
 
@@ -962,8 +963,7 @@ close to post-formatting as possible."
                      (value (funcall
                              (or (nth 2 setting) #'identity)
                              (if (keywordp source)
-                                 (plist-get prettier-config-cache
-                                            source)
+                                 (plist-get options source)
                                source))))
                 (unless (eq value 'unchanged)
                   (mapcar
@@ -981,6 +981,25 @@ close to post-formatting as possible."
     ((debug error)
      (message "Could not sync Prettier config, consider setting \
 `prettier-mode-sync-config-flag' to nil: %S" err))))
+
+(defun prettier--revert-synced-config ()
+  "Revert any change made by `prettier--sync-config'."
+  (mapc
+   (lambda (local-setting)
+     (let ((var (car local-setting)))
+       (cond
+        ((or (not (boundp var))
+             (not (eq (eval var) (nth 3 local-setting))))
+         ;; If the setting has changed since we set it, or the
+         ;; variable was unbound in the meantime, leave it alone
+         nil)
+        ((null (nth 1 local-setting))
+         ;; setting wasn't local before, kill the variable
+         (kill-local-variable var))
+        (t
+         ;; otherwise, set it to previous value
+         (set var (nth 2 local-setting))))))
+   prettier-previous-local-settings))
 
 (iter2-defun prettier--request-iter (prettier-process
                                      request

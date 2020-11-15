@@ -74,6 +74,12 @@
     (web-mode)
     (should (equal (prettier--parsers) '(typescript)))))
 
+(ert-deftest prettier--parsers-temp-buffer ()
+  (with-temp-buffer
+    (js-mode)
+    (require 'lsp-mode)
+    (should (equal (prettier--parsers) '(babel flow babel-flow)))))
+
 (ert-deftest customize-prettier ()
   (customize-option 'prettier-pre-warm)
   (customize-option 'prettier-inline-errors-flag)

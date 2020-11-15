@@ -160,6 +160,7 @@ Requires Prettier 1.9+."
                                       python
                                       ruby
                                       scss
+                                      sh
                                       solidity
                                       svelte
                                       swift
@@ -198,6 +199,7 @@ on your Prettier version and which plug-ins you have installed."
     (const :tag "Python (1.10+, requires plugin)" python)
     (const :tag "Ruby (1.10+, requires plugin)" ruby)
     (const :tag "SCSS (1.4+)" scss)
+    (const :tag "Shell (2.0+)" sh)
     (const :tag "Solidity (2.0+?, requires plugin)" solidity)
     (const :tag "Svelte (1.16+, requires plugin)" svelte)
     (const :tag "Swift (1.10+, requires plugin)" swift)
@@ -296,6 +298,7 @@ Other errors are shown inline or in the error buffer.")
       python-indent                 ; python-mode
       ruby-indent-level             ; ruby-mode
       sgml-basic-offset             ; js2-mode, html-mode, svelte-mode
+      sh-indentation                ; sh-mode
       smie-indent-basic             ; smie.el (generic)
       standard-indent               ; indent.el (generic)
       swift-mode:basic-offset       ; swift-mode.el
@@ -419,6 +422,7 @@ won't be touched.")
     (enh-ruby-mode . (ruby))
     (python-mode . (python))
     (php-mode . (php))
+    (sh-mode . (sh))
     (sql-mode . (postgresql))
     (swift-mode . (swift)))
   "Map from major mode to Prettier parsers.

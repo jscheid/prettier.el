@@ -219,7 +219,7 @@ function tryRequirePrettier(targetRequire) {
     if (
       Array.prototype.includes.call(
         ["MODULE_NOT_FOUND", "UNDECLARED_DEPENDENCY"],
-        e.code
+        e["code"]
       )
     ) {
       return null;
@@ -237,24 +237,19 @@ function tryRequirePrettier(targetRequire) {
 function getLocalPrettier(directory) {
   const targetRequire = createRequire(path["join"](directory, "package.json"));
 
-  // Try loading prettier for non-PnP packages, or if PnP API has
-  // already been loaded.
+  // Try loading prettier for non-PnP packages and return it if found.
   const prettier = tryRequirePrettier(targetRequire);
-
-  // If we found prettier, return it.  Also return if we didn't find it,
-  // but we had already setup PnP before
   if (prettier) {
     return prettier;
   }
 
-  // Try finding .pnp.[c]js
+  // Try finding .pnp.[c]js and bail out if we can't find it.
   const pnpJs = findFileInAncestry(directory, [".pnp.js", ".pnp.cjs"]);
   if (!pnpJs) {
-    // Non-PnP package - give up
     return null;
   }
 
-  // Retry loading prettier after setting up PnP API
+  // Setup PnP API and retry loading prettier.
   targetRequire(pnpJs)["setup"]();
   return tryRequirePrettier(targetRequire);
 }

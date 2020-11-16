@@ -218,7 +218,11 @@ function tryRequirePrettier(targetRequire) {
   } catch (e) {
     if (
       Array.prototype.includes.call(
-        ["MODULE_NOT_FOUND", "UNDECLARED_DEPENDENCY"],
+        [
+          "MODULE_NOT_FOUND",
+          "UNDECLARED_DEPENDENCY",
+          "MISSING_PEER_DEPENDENCY",
+        ],
         e["code"]
       )
     ) {

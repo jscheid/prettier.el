@@ -18,7 +18,7 @@ Ensure that variable `prettier-el-home` is set to the source directory or
 to do so is the following:
 
 ```elisp
-(defvar prettier-el-home "/path/to/this/directory")
+(defvar prettier-el-home "/path/to/this/directory/dist/")
 (use-package prettier :load-path prettier-el-home)
 ```
 

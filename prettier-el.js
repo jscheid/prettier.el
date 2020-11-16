@@ -234,7 +234,7 @@ function tryRequirePrettier(targetRequire) {
  * @param {!string} directory  The directory for which to find a local Prettier installation.
  * @return {PrettierAPI}  The Prettier package if found, or null if not found.
  */
-function getLocalPrettier(directory) {  
+function getLocalPrettier(directory) {
   const targetRequire = createRequire(path["join"](directory, "package.json"));
 
   // Try loading prettier for non-PnP packages, or if PnP API has
@@ -248,10 +248,7 @@ function getLocalPrettier(directory) {
   }
 
   // Try finding .pnp.[c]js
-  const pnpJs = findFileInAncestry(directory, [
-    ".pnp.js",
-    ".pnp.cjs",
-  ]);
+  const pnpJs = findFileInAncestry(directory, [".pnp.js", ".pnp.cjs"]);
   if (!pnpJs) {
     // Non-PnP package - give up
     return null;

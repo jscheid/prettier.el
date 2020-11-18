@@ -25,6 +25,7 @@ const path = externalRequire("path");
 const vm = externalRequire("vm");
 const punycode = externalRequire("punycode");
 const execSync = externalRequire("child_process")["execSync"];
+const nativeModule = externalRequire("module");
 
 // We return this exit code whenever there's unexpected data on the wire
 const EXIT_CODE_PROTOCOL_ERROR = 1;
@@ -151,13 +152,21 @@ function getGlobalPrettier() {
 
   const pathOptions = ["prettier", npmGlobalPath, yarnGlobalPath];
 
+  const globalRequire = createRequire("/");
+
   for (let i = 0; i < pathOptions.length; ++i) {
     if (pathOptions[i]) {
       try {
-        globalPrettier = externalRequire(pathOptions[i]);
+        globalPrettier = globalRequire(pathOptions[i]);
         break;
       } catch (e) {
-        if (!(e instanceof Error) || e["code"] !== "MODULE_NOT_FOUND") {
+        if (
+          !(e instanceof Error) ||
+          !Array.prototype.includes.call(
+            ["MODULE_NOT_FOUND", "QUALIFIED_PATH_RESOLUTION_FAILED"],
+            e["code"]
+          )
+        ) {
           throw e;
         }
       }
@@ -174,54 +183,79 @@ function getGlobalPrettier() {
 }
 
 /**
- * Return the Prettier package from `node_modules` if it exists.
+ * Find one of a set of files in the given directory or any of its parent
+ * directories.
  *
- * @param {!string} directory
- * @return {!PrettierAPI|null}
+ * @param {!string} directory  The directory where to start looking.
+ * @param {!Array<string>} fileNames  All file names to try in each directory.
+ * @return {!string|null}  Path to the file found, or null if not found.
  */
-function getLocalPrettier(directory) {
-  const prettierCandidate = path["join"](directory, "node_modules", "prettier");
+function findFileInAncestry(directory, fileNames) {
+  for (let i = 0; i < fileNames.length; ++i) {
+    const candidate = path["join"](directory, fileNames[i]);
+    if (fs["existsSync"](candidate)) {
+      return candidate;
+    }
+  }
+
+  const parent = path["dirname"](directory);
+  if (parent !== directory) {
+    return findFileInAncestry(parent, fileNames);
+  }
+
+  return null;
+}
+
+/**
+ * Try requiring the Prettier package using the given require function.
+ *
+ * @param {!Function} targetRequire  The require function to use.
+ * @return {PrettierAPI}  The Prettier package if found, or null if not found.
+ */
+function tryRequirePrettier(targetRequire) {
   try {
-    const stat = fs["statSync"](prettierCandidate);
-    return stat.isDirectory() ? externalRequire(prettierCandidate) : null;
+    return targetRequire("prettier");
   } catch (e) {
-    if (e.code === "ENOENT") return null;
+    if (
+      Array.prototype.includes.call(
+        [
+          "MODULE_NOT_FOUND",
+          "UNDECLARED_DEPENDENCY",
+          "MISSING_PEER_DEPENDENCY",
+        ],
+        e["code"]
+      )
+    ) {
+      return null;
+    }
     throw e;
   }
 }
 
 /**
- * Return the Prettier package under Yarn Plug'n'Play if either `.pnp.js` or
- * `.pnp.cjs` exists. Inject PnP API into the Node.js environment only once.
- * This side effect is unlikely to be a problem at present but we recommend to
- * use project-specific Node.js executable with any tool such as `direnv`.
+ * Find locally installed Prettier, or null if not found.
  *
- * @param {!string} directory
- * @return {!PrettierAPI|null}
+ * @param {!string} directory  The directory for which to find a local Prettier installation.
+ * @return {PrettierAPI}  The Prettier package if found, or null if not found.
  */
-function getYarnPnpifyedLocalPrettier(directory) {
-  const yarnPnpCandidate = path["join"](directory, ".pnp");
-  if (
-    fs["existsSync"](yarnPnpCandidate + ".js") ||
-    fs["existsSync"](yarnPnpCandidate + ".cjs")
-  ) {
-    try {
-      const m = externalRequire("module");
-      const createRequire = m["createRequire"] || m["createRequireFromPath"];
-      if (!createRequire) {
-        throw new Error("You should upgrage Node.js v10.12.0 or above.");
-      }
-      if (!process["versions"]["pnp"]) {
-        externalRequire(yarnPnpCandidate)["setup"]();
-      }
-      const targetRequire = createRequire(yarnPnpCandidate);
-      return targetRequire(targetRequire["resolve"]("prettier"));
-    } catch (e) {
-      if (e.code === "ENOENT") return null;
-      throw e;
-    }
+function getLocalPrettier(directory) {
+  const targetRequire = createRequire(path["join"](directory, "package.json"));
+
+  // Try loading prettier for non-PnP packages and return it if found.
+  const prettier = tryRequirePrettier(targetRequire);
+  if (prettier) {
+    return prettier;
   }
-  return null;
+
+  // Try finding .pnp.[c]js and bail out if we can't find it.
+  const pnpJs = findFileInAncestry(directory, [".pnp.js", ".pnp.cjs"]);
+  if (!pnpJs) {
+    return null;
+  }
+
+  // Setup PnP API and retry loading prettier.
+  targetRequire(pnpJs)["setup"]();
+  return tryRequirePrettier(targetRequire);
 }
 
 /**
@@ -239,8 +273,7 @@ function getPrettierForDirectory(directory) {
   if (cached) return cached;
 
   if (fs["existsSync"](path["join"](directory, "package.json"))) {
-    const prettier =
-      getLocalPrettier(directory) || getYarnPnpifyedLocalPrettier(directory);
+    const prettier = getLocalPrettier(directory);
     if (prettier) {
       prettierCache.set(directory, prettier);
       return prettier;
@@ -614,3 +647,47 @@ function bestParser(prettier, parsers, options, filepath) {
     }
   });
 };
+
+// The following is MIT-licensed code adapted from
+// https://github.com/arcanis/jest-pnp-resolver/blob/master/createRequire.js
+// Copyright © 2016 Maël Nison
+
+/**
+ * Similar to module.createRequire (https://nodejs.org/api/module.html#module_module_createrequire_filename),
+ * but works on all Node versions.
+ *
+ * @param {!string} filename  Filename to be used to construct the require function.
+ *
+ * @return {!Function} the require function.
+ */
+function createRequire(filename) {
+  // Added in Node v12.2.0
+  if (nativeModule["createRequire"]) {
+    return nativeModule["createRequire"](filename);
+  }
+
+  // Added in Node v10.12.0 and deprecated since Node v12.2.0
+  if (nativeModule["createRequireFromPath"]) {
+    return nativeModule["createRequireFromPath"](filename);
+  }
+
+  // Polyfill
+  return _createRequire(filename);
+}
+
+/**
+ * Polyfill for module.createRequire for Node versions < 10.12.
+ *
+ * @param {!string} filename  Filename to be used to construct the require function.
+ *
+ * @return {!Function} the require function.
+ */
+function _createRequire(filename) {
+  const mod = new nativeModule["Module"](filename, null);
+  mod["filename"] = filename;
+  mod["paths"] = nativeModule["Module"]["_nodeModulePaths"](
+    path["dirname"](filename)
+  );
+  mod["_compile"]("module.exports = require;", filename);
+  return mod["exports"];
+}

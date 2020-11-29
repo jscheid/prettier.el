@@ -143,8 +143,10 @@ Requires Prettier 1.9+."
 (defcustom prettier-enabled-parsers '(angular
                                       babel
                                       babel-flow
+                                      babel-ts
                                       css
                                       elm
+                                      espree
                                       flow
                                       graphql
                                       html
@@ -154,6 +156,7 @@ Requires Prettier 1.9+."
                                       lua
                                       markdown
                                       mdx
+                                      meriyah
                                       php
                                       postgresql
                                       pug
@@ -180,8 +183,10 @@ on your Prettier version and which plug-ins you have installed."
     (const :tag "Angular (1.15+)" angular)
     (const :tag "Babel (formerly Babylon)" babel)
     (const :tag "Babel-Flow (1.15+)" babel-flow)
+    (const :tag "Babel-TS (2.0+)" babel-ts)
     (const :tag "CSS (1.4+)" css)
     (const :tag "Elm (2.0+?, requires plugin)" elm)
+    (const :tag "Espree (2.2+)" espree)
     (const :tag "Flow" flow)
     (const :tag "GraphQL (1.5+)" graphql)
     (const :tag "Java (2.0+?, requires plugin)" java)
@@ -193,6 +198,7 @@ on your Prettier version and which plug-ins you have installed."
     (const :tag "HTML (1.16+)" html)
     (const :tag "Markdown (1.8+)" markdown)
     (const :tag "MDX (1.15+)" mdx)
+    (const :tag "Meriyah (2.2+)" meriyah)
     (const :tag "PHP (1.10+, requires plugin)" php)
     (const :tag "PostgreSQL (1.10+, requires plugin" postgresql)
     (const :tag "Pug (2.0+, requires plugin)" pug)
@@ -378,12 +384,12 @@ won't be touched.")
              (ignore-errors
                (member (lsp-buffer-language)
                        '("typescript" "typescriptreact")))))
-    '(typescript babel flow babel-flow))
+    '(typescript babel-ts babel meriyah espree flow babel-flow))
    ((and (boundp 'flow-minor-mode)
          flow-minor-mode)
-    '(babel-flow flow babel))
+    '(babel-flow flow babel meriyah espree))
    (t
-    '(babel flow babel-flow))))
+    '(babel meriyah espree flow babel-flow))))
 
 (defconst prettier-major-mode-parsers
   `((angular-mode . (angular))
@@ -395,7 +401,7 @@ won't be touched.")
     (js-mode . ,#'prettier--guess-js-ish)
     (js2-mode . ,#'prettier--guess-js-ish)
     (js3-mode . ,#'prettier--guess-js-ish)
-    (typescript-mode . (typescript))
+    (typescript-mode . (typescript babel-ts))
     (css-mode . (css))
     (scss-mode . (scss))
     (less-mode . (less))
@@ -435,7 +441,7 @@ when called with buffer current, returns such a list.")
   `((nil . (html))
     ("javascript" . ,#'prettier--guess-js-ish)
     ("jsx" . ,#'prettier--guess-js-ish)
-    ("typescript" . (typescript))
+    ("typescript" . (typescript babel-ts))
     ("css" . (css))
     ("json" . (json json5))
     ("markdown" . (markdown))

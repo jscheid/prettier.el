@@ -952,31 +952,32 @@ close to post-formatting as possible."
          (plist-get (plist-get config :versions) :prettier)
 
          prettier-previous-local-settings
-         (seq-filter
-          #'identity
-          (apply
-           #'append
-           (mapcar
-            (lambda (setting)
-              (let* ((vars (nth 0 setting))
-                     (source (nth 1 setting))
-                     (value (funcall
-                             (or (nth 2 setting) #'identity)
-                             (if (keywordp source)
-                                 (plist-get options source)
-                               source))))
-                (unless (eq value 'unchanged)
-                  (mapcar
-                   (lambda (var)
-                     (when (boundp var)
-                       (let ((result
-                              (list var (local-variable-p var)
-                                    (eval var)
-                                    value)))
-                         (set (make-local-variable var) value)
-                         result)))
-                   vars))))
-            prettier-sync-settings)))))
+         (when options
+           (seq-filter
+            #'identity
+            (apply
+             #'append
+             (mapcar
+              (lambda (setting)
+                (let* ((vars (nth 0 setting))
+                       (source (nth 1 setting))
+                       (value (funcall
+                               (or (nth 2 setting) #'identity)
+                               (if (keywordp source)
+                                   (plist-get options source)
+                                 source))))
+                  (unless (eq value 'unchanged)
+                    (mapcar
+                     (lambda (var)
+                       (when (boundp var)
+                         (let ((result
+                                (list var (local-variable-p var)
+                                      (eval var)
+                                      value)))
+                           (set (make-local-variable var) value)
+                           result)))
+                     vars))))
+              prettier-sync-settings))))))
     ;; Ignore any errors but print a warning
     ((debug error)
      (message "Could not sync Prettier config, consider setting \

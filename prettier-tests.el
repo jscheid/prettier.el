@@ -72,13 +72,13 @@
   (with-temp-buffer
     (setq buffer-file-name "test.ts")
     (web-mode)
-    (should (equal (prettier--parsers) '(typescript)))))
+    (should (equal (prettier--parsers) '(typescript babel-ts)))))
 
 (ert-deftest prettier--parsers-temp-buffer ()
   (with-temp-buffer
     (js-mode)
     (require 'lsp-mode)
-    (should (equal (prettier--parsers) '(babel flow babel-flow)))))
+    (should (equal (prettier--parsers) '(babel meriyah espree flow babel-flow)))))
 
 (ert-deftest customize-prettier ()
   (customize-option 'prettier-pre-warm)

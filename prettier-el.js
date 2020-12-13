@@ -469,7 +469,9 @@ function bestParser(prettier, parsers, options, filepath) {
       options["filepath"] = filepath;
       options["rangeStart"] = undefined;
       options["rangeEnd"] = undefined;
-      options["parser"] = parser;
+      if (!options["parser"]) {
+        options["parser"] = parser;
+      }
 
       const result = prettier.formatWithCursor(body, options);
 

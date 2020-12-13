@@ -46,6 +46,7 @@
 (require 'subr-x)
 (require 'compile)
 (require 'ansi-color)
+(require 'package)
 
 (eval-when-compile
   (require 'cl-lib)

@@ -13,6 +13,8 @@
 
 
 (require 'ert)
+(require 'noflet)
+(require 'thingatpt)
 (require 'prettier)
 
 (setq prettier-el-home (concat
@@ -27,16 +29,15 @@
      (lambda (original-file)
        (let ((actual
               (with-temp-buffer
-                (message "xxx %S" original-file)
                 (insert-file-contents original-file)
                 (setq buffer-file-name original-file)
                 (rename-buffer original-file)
                 (set-auto-mode)
-                (let ((setup-elisp
-                       (concat directory "setup.elisp")))
+                (let ((setup-elisp "setup.elisp"))
                   (when (file-exists-p setup-elisp)
                     (eval
-                     (f-read-text setup-elisp))))
+                     (thing-at-point--read-from-whole-string
+                      (f-read-text setup-elisp)))))
                 (prettier-prettify)
                 (buffer-string)))
              (expected

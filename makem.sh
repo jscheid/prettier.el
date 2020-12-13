@@ -230,6 +230,7 @@ function elisp-package-initialize-file {
 $elisp_org_package_archive
 (package-initialize)
 (setq load-prefer-newer t)
+(provide 'makem-package-initialize)
 EOF
     echo $file
 }
@@ -284,6 +285,7 @@ function batch-byte-compile {
 
     run_emacs \
         "${error_on_warn[@]}" \
+        --eval "(progn (unload-feature 'makem-package-initialize) (unload-feature 'package))" \
         --funcall batch-byte-compile \
         "$@"
 }

@@ -46,6 +46,7 @@
 (require 'subr-x)
 (require 'compile)
 (require 'ansi-color)
+(require 'package)
 
 (eval-when-compile
   (require 'cl-lib)
@@ -499,6 +500,9 @@ returns.")
 
 (defvar prettier-nvm-node-command-cache nil
   "Cache for the result of `prettier--node-from-nvm'.")
+
+(defvar prettier-parser-history nil
+  "History for `prettier--read-parsers'.")
 
 ;;;;; Local Variables
 

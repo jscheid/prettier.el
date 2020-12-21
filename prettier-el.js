@@ -325,6 +325,10 @@ function parseParsers(parsersString) {
 }
 
 function bestParser(prettier, parsers, options, filepath) {
+  if (options["parser"]) {
+    return options["parser"];
+  }
+
   if (parsers !== null) {
     const supportedParsers = prettier.getSupportInfo
       ? prettier
@@ -469,9 +473,7 @@ function bestParser(prettier, parsers, options, filepath) {
       options["filepath"] = filepath;
       options["rangeStart"] = undefined;
       options["rangeEnd"] = undefined;
-      if (!options["parser"]) {
-        options["parser"] = parser;
-      }
+      options["parser"] = parser;
 
       const result = prettier.formatWithCursor(body, options);
 

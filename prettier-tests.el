@@ -21,6 +21,14 @@
                         (file-name-directory load-file-name)
                         "dist/"))
 
+(defun prettier--eval-file-if-exists (filename)
+  "Read and eval file FILENAME if it exists."
+  (let ((setup-elisp filename))
+    (when (file-exists-p setup-elisp)
+      (eval
+       (thing-at-point--read-from-whole-string
+        (f-read-text setup-elisp))))))
+
 (defun prettier--run-test-case (directory)
   "Run prettier test in DIRECTORY."
   (let ((default-directory directory))
@@ -33,12 +41,9 @@
                 (setq buffer-file-name original-file)
                 (rename-buffer original-file)
                 (set-auto-mode)
-                (let ((setup-elisp "setup.elisp"))
-                  (when (file-exists-p setup-elisp)
-                    (eval
-                     (thing-at-point--read-from-whole-string
-                      (f-read-text setup-elisp)))))
+                (prettier--eval-file-if-exists "setup.elisp")
                 (prettier-prettify)
+                (prettier--eval-file-if-exists "test.elisp")
                 (buffer-string)))
              (expected
               (with-temp-buffer
@@ -48,7 +53,8 @@
                   ".prettier."
                   original-file))
                 (buffer-string))))
-         (should (equal actual expected))))
+         (should (equal actual expected))
+         (prettier--eval-file-if-exists "teardown.elisp")))
      (directory-files directory t "\\.original\\."))))
 
 (mapc

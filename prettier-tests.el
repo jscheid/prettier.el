@@ -13,11 +13,21 @@
 
 
 (require 'ert)
+(require 'noflet)
+(require 'thingatpt)
 (require 'prettier)
 
 (setq prettier-el-home (concat
                         (file-name-directory load-file-name)
                         "dist/"))
+
+(defun prettier--eval-file-if-exists (filename)
+  "Read and eval file FILENAME if it exists."
+  (let ((setup-elisp filename))
+    (when (file-exists-p setup-elisp)
+      (eval
+       (thing-at-point--read-from-whole-string
+        (f-read-text setup-elisp))))))
 
 (defun prettier--run-test-case (directory)
   "Run prettier test in DIRECTORY."
@@ -27,17 +37,13 @@
      (lambda (original-file)
        (let ((actual
               (with-temp-buffer
-                (message "xxx %S" original-file)
                 (insert-file-contents original-file)
                 (setq buffer-file-name original-file)
                 (rename-buffer original-file)
                 (set-auto-mode)
-                (let ((setup-elisp
-                       (concat directory "setup.elisp")))
-                  (when (file-exists-p setup-elisp)
-                    (eval
-                     (f-read-text setup-elisp))))
+                (prettier--eval-file-if-exists "setup.elisp")
                 (prettier-prettify)
+                (prettier--eval-file-if-exists "test.elisp")
                 (buffer-string)))
              (expected
               (with-temp-buffer
@@ -47,7 +53,8 @@
                   ".prettier."
                   original-file))
                 (buffer-string))))
-         (should (equal actual expected))))
+         (should (equal actual expected))
+         (prettier--eval-file-if-exists "teardown.elisp")))
      (directory-files directory t "\\.original\\."))))
 
 (mapc

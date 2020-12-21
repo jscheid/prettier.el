@@ -325,6 +325,10 @@ function parseParsers(parsersString) {
 }
 
 function bestParser(prettier, parsers, options, filepath) {
+  if (options["parser"]) {
+    return options["parser"];
+  }
+
   if (parsers !== null) {
     const supportedParsers = prettier.getSupportInfo
       ? prettier

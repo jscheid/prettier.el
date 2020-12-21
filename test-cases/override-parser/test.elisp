@@ -1,0 +1,1 @@
+(should (equal prettier-last-parser "babel-ts"))

@@ -514,8 +514,9 @@ function bestParser(prettier, parsers, options, filepath) {
       out.push(createResponseHeader("T", timeAfterFormat));
       out.push(createResponseHeader("T", timeBeforeFormat));
 
-      if (Number.isFinite(result["cursorOffset"])) {
-        out.push(createResponseHeader("C", result["cursorOffset"]));
+      var newCursorOffset = result["cursorOffset"];
+      if (Number.isFinite(newCursorOffset) && newCursorOffset >= 0) {
+        out.push(createResponseHeader("C", newCursorOffset));
       }
       out.push(Z);
       process.stdout.write(Buffer.concat(out));

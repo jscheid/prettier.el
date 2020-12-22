@@ -1197,7 +1197,7 @@ formatting."
          (point-end-p (eq point-before (point-max)))
          (relative-point (and (>= point-before start-point)
                               (<= point-before end-point)
-                              (- point-before start-point -1)))
+                              (- point-before start-point)))
          (filename (prettier--local-file-name))
          (tempfile (make-nearby-temp-file "prettier-emacs."))
          result-point
@@ -1272,7 +1272,7 @@ formatting."
 
           (unless any-errors
             (prettier--clear-errors)
-            (when result-point (goto-char result-point)))
+            (when result-point (goto-char (1+ result-point))))
 
           (prettier--maybe-show-benchmark start-time
                                           (current-time)

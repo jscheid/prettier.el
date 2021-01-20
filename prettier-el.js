@@ -17,6 +17,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// Hack to prevent Yarn 2.x from logging warnings to stderr.
+function noop() {}
+global["console"]["warn"] = noop;
+
 // Hack to circumvent Closure Compiler CommonJS resolution
 const externalRequire = require;
 

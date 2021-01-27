@@ -45,6 +45,8 @@ const otherParserName = new Map([
   ["babel", "babylon"],
 ]);
 
+const parsersWithBrokenCursorTranslation = ["ruby", "svelte"];
+
 /** @type{PrettierAPI} */
 let globalPrettier;
 
@@ -473,7 +475,9 @@ function bestParser(prettier, parsers, options, filepath) {
         return;
       }
 
-      const translateCursor = parser !== "ruby";
+      const translateCursor = !parsersWithBrokenCursorTranslation.includes(
+        parser
+      );
 
       if (translateCursor) {
         options["cursorOffset"] = cursorOffset;

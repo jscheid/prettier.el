@@ -473,13 +473,19 @@ function bestParser(prettier, parsers, options, filepath) {
         return;
       }
 
-      options["cursorOffset"] = cursorOffset;
+      const translateCursor = parser !== "ruby";
+
+      if (translateCursor) {
+        options["cursorOffset"] = cursorOffset;
+      }
       options["filepath"] = filepath;
       options["rangeStart"] = undefined;
       options["rangeEnd"] = undefined;
       options["parser"] = parser;
 
-      const result = prettier.formatWithCursor(body, options);
+      const result = translateCursor
+        ? prettier["formatWithCursor"](body, options)
+        : { ["formatted"]: prettier["format"](body, options) };
 
       const timeAfterFormat = Date.now();
       const diffResult = new diff().diff_main(body, result["formatted"]);

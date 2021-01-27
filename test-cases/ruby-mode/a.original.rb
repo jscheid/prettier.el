@@ -2,6 +2,6 @@
 
 def  foo ( a , b )
   bar do |a|
-       x
+       baz
 end
 end

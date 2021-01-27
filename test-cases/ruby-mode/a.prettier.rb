@@ -1,3 +1,3 @@
 def foo(a, b)
-  bar { |a| x }
+  bar { |a| baz }
 end

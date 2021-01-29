@@ -45,6 +45,8 @@ const otherParserName = new Map([
   ["babel", "babylon"],
 ]);
 
+const ignoreParser = "ignored";
+
 /** @type{PrettierAPI} */
 let globalPrettier;
 
@@ -187,6 +189,11 @@ function getGlobalPrettier() {
 }
 
 /**
+ * Cache for findFileInAncestry.
+ */
+const ffiaCache = new Map();
+
+/**
  * Find one of a set of files in the given directory or any of its parent
  * directories.
  *
@@ -195,19 +202,28 @@ function getGlobalPrettier() {
  * @return {!string|null}  Path to the file found, or null if not found.
  */
 function findFileInAncestry(directory, fileNames) {
-  for (let i = 0; i < fileNames.length; ++i) {
+  const key = fileNames.join(",") + "/" + directory;
+  if (ffiaCache.has(key)) {
+    return ffiaCache.get(key);
+  }
+
+  let result = null;
+  for (let i = 0; i < fileNames.length && !result; ++i) {
     const candidate = path["join"](directory, fileNames[i]);
     if (fs["existsSync"](candidate)) {
-      return candidate;
+      result = candidate;
     }
   }
 
-  const parent = path["dirname"](directory);
-  if (parent !== directory) {
-    return findFileInAncestry(parent, fileNames);
+  if (!result) {
+    const parent = path["dirname"](directory);
+    if (parent !== directory) {
+      result = findFileInAncestry(parent, fileNames);
+    }
   }
 
-  return null;
+  ffiaCache.set(key, result);
+  return result;
 }
 
 /**
@@ -328,7 +344,19 @@ function parseParsers(parsersString) {
         );
 }
 
-function bestParser(prettier, parsers, options, filepath) {
+function bestParser(prettier, parsers, options, filepath, inferParser) {
+  const fileInfo = filepath
+    ? prettier["getFileInfo"].sync(filepath, {
+        ["ignorePath"]: findFileInAncestry(path["dirname"](filepath), [
+          ".prettierignore",
+        ]),
+      })
+    : null;
+
+  if (fileInfo && fileInfo["ignored"]) {
+    return ignoreParser;
+  }
+
   if (options["parser"]) {
     return options["parser"];
   }
@@ -344,9 +372,11 @@ function bestParser(prettier, parsers, options, filepath) {
       return result;
     }
   }
-  if (filepath) {
-    return prettier["getFileInfo"].sync(filepath, null)["inferredParser"];
+
+  if (fileInfo && inferParser) {
+    return fileInfo["inferredParser"];
   }
+
   return null;
 }
 
@@ -453,7 +483,8 @@ function bestParser(prettier, parsers, options, filepath) {
         prettier,
         parsers,
         options,
-        inferParser ? filepath : null
+        filepath,
+        inferParser
       );
 
       const out = [];
@@ -467,7 +498,7 @@ function bestParser(prettier, parsers, options, filepath) {
         newline
       );
 
-      if (inferParser && !parser) {
+      if ((inferParser && !parser) || parser === ignoreParser) {
         out.push(Z);
         process.stdout.write(Buffer.concat(out));
         return;
@@ -581,7 +612,8 @@ function bestParser(prettier, parsers, options, filepath) {
             prettier,
             parsers,
             options,
-            inferParser ? filepath : null
+            filepath,
+            inferParser
           ),
         });
         return { type: "NullLiteral" };

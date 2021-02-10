@@ -456,9 +456,18 @@ function bestParser(prettier, parsers, options, filepath, inferParser) {
       packet.toString("ascii", newlineIndex2 + 1, newlineIndex3),
       16
     );
+
+    const newlineIndex4 = packet.indexOf(10, newlineIndex3 + 1);
+    if (newlineIndex4 < 0) {
+      protocolError();
+    }
+
+    const parsersWithoutCursorTranslation = JSON.parse(
+      packet.toString("utf-8", newlineIndex3 + 1, newlineIndex4)
+    );
     const filename = packet
-      .slice(newlineIndex3 + 1, packet.length - 2)
-      .toString("ascii");
+      .slice(newlineIndex4 + 1, packet.length - 2)
+      .toString("utf-8");
 
     const body = fs["readFileSync"](filename, "utf8");
 
@@ -501,13 +510,20 @@ function bestParser(prettier, parsers, options, filepath, inferParser) {
         return;
       }
 
-      options["cursorOffset"] = cursorOffset;
+      const useTranslation = !parsersWithoutCursorTranslation.includes(parser);
+
+      if (useTranslation) {
+        options["cursorOffset"] = cursorOffset;
+      }
+
       options["filepath"] = filepath;
       options["rangeStart"] = undefined;
       options["rangeEnd"] = undefined;
       options["parser"] = parser;
 
-      const result = prettier.formatWithCursor(body, options);
+      const result = useTranslation
+        ? prettier.formatWithCursor(body, options)
+        : { formatted: prettier.format(body, options) };
 
       const timeAfterFormat = Date.now();
       const diffResult = new diff().diff_main(body, result["formatted"]);

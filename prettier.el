@@ -479,6 +479,36 @@ when called with buffer current, returns such a list.")
   "Specifications for matching errors in prettier invocations.
 See `compilation-error-regexp-alist' for help on their format.")
 
+(defvar prettier-parsers-without-cursor-translation
+  '("angular"
+    "babel"
+    "babel-flow"
+    "babel-ts"
+    "css"
+    "espree"
+    "flow"
+    "glimmer"
+    "graphql"
+    "html"
+    "json"
+    "json-stringify"
+    "json5"
+    "less"
+    "luc"
+    "markdown"
+    "mdx"
+    "meriyah"
+    "remark"
+    "scss"
+    "svelte"
+    "typescript"
+    "vue"
+    "yaml")
+  "List of parsers with broken cursor translation code.
+
+These parsers shouldn't be invoked with `formatWithCursor' as
+doing so may be very slow or yield incorrect results.")
+
 (defvar prettier-error-buffer-name
   "*prettier errors*"
   "Name to use for the buffer showing Prettier error messages.")
@@ -1198,6 +1228,8 @@ formatting are stored."
               ",")
            "-")
     "\n" (format "%X" (or relative-point 1))
+    "\n" (json-encode
+          prettier-parsers-without-cursor-translation)
     "\n" (prettier--pick-localname tempfile)
     "\n\n")))
 
@@ -1224,7 +1256,7 @@ formatting."
          (process-buf (process-buffer (prettier--get-process)))
          (start-point (copy-marker (or start (point-min)) nil))
          (end-point (copy-marker (or end (point-max)) t))
-         (point-before (point))
+         (point-before (copy-marker (point)))
          (point-end-p (eq point-before (point-max)))
          (relative-point (and (>= point-before start-point)
                               (<= point-before end-point)

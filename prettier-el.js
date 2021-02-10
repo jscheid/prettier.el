@@ -323,12 +323,13 @@ function getPrettierForPath(filepath) {
   if (!path["isAbsolute"](filepath)) {
     return getGlobalPrettier();
   }
-  let prettierPath = prettierCache.get(filepath);
-  if (!prettierPath) {
-    const directory = path["dirname"](filepath);
-    prettierPath = getPrettierForDirectory(directory);
-    prettierCache.set(filepath, prettierPath);
+  if (prettierCache.has(filepath)) {
+    return prettierCache.get(filepath);
   }
+
+  const directory = path["dirname"](filepath);
+  const prettierPath = getPrettierForDirectory(directory);
+  prettierCache.set(filepath, prettierPath);
   return prettierPath;
 }
 

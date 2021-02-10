@@ -111,11 +111,13 @@ be able to set/override the Prettier parser to use for formatting.
 
 ### Changing Prettier Configuration
 
-After you change Prettier options (by creating, modifying or deleting
-Prettier configuration files), this package won't pick up the changes
-automatically. Disable and re-enable `global-prettier-mode` to force
-reloading the new configuration. This might be improved in the future by
-monitoring relevant files for changes.
+You should run `M-x prettier-restart` whenever any relevant
+configuration changes, such as when you install a new version of Node,
+Prettier, or any plugins; when you install or uninstall Prettier as a
+local npm package in a directory from which you already have files
+open in Emacs; or when you change Prettier settings that might affect
+any open files.  Doing so will clear all caches and ensure that your
+changes are picked up.
 
 ### On Remote Servers
 

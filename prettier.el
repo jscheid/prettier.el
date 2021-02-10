@@ -568,7 +568,34 @@ With prefix, ask for the parser to use"
   (maphash (lambda (_key process)
              (quit-process process))
            prettier-processes)
-  (clrhash prettier-processes))
+  (clrhash prettier-processes)
+  (setq prettier-nvm-node-command-cache nil))
+
+(defun prettier-restart ()
+  "Restart Prettier in all buffers.
+
+This will cause all caches to be cleared and the latest version
+of the sidecar JavaScript file to be used.  It is executed every
+time this package is loaded which is intended to ensure you're
+running the latest when the package is upgraded.
+
+You should run this function whenever any relevant configuration
+changes, such as when you install a new version of Node,
+Prettier, or any plugins; when you install or uninstall Prettier
+as a local npm package in a directory from which you already have
+files open in Emacs; or when you change Prettier settings that
+might affect any open files."
+  (interactive)
+  (prettier--quit-all-processes)
+  (unless (eq prettier-pre-warm 'none)
+    (mapc (lambda (buf)
+            (with-current-buffer buf
+              (when (and (boundp 'prettier-mode)
+                         prettier-mode)
+                (prettier--get-process
+                 (eq prettier-pre-warm 'full)))))
+          (buffer-list)))
+  (message "Prettier restart complete."))
 
 (defun prettier--buffer-remote-p (&optional identification connected)
   "Return `file-remote-p' result for the current buffer.
@@ -683,8 +710,7 @@ should be used when filing bug reports."
  'global-prettier-mode-hook
  (lambda ()
    (unless global-prettier-mode
-     (prettier--quit-all-processes)
-     (setq prettier-nvm-node-command-cache nil))))
+     (prettier--quit-all-processes))))
 
 
 ;;;; Support
@@ -1390,6 +1416,13 @@ parsers configured for it and it is a derived mode."
 (add-to-list 'compilation-error-regexp-alist-alist
              (cons 'prettier prettier-compilation-regexps))
 (add-to-list 'compilation-error-regexp-alist 'prettier)
+
+
+;;;; Ensure we're running latest JavaScript sub-process
+
+;; (On initial load, `prettier-restart' is a no-op.)
+(when load-in-progress
+  (prettier-restart))
 
 
 ;;;; Footer

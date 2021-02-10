@@ -1429,6 +1429,6 @@ parsers configured for it and it is a derived mode."
 
 (provide 'prettier)
 
-;; LocalWords: editorconfig minibuffer minified nvm parsers stdin
+;; LocalWords: editorconfig minibuffer minified nvm parsers stdin npm
 
 ;;; prettier.el ends here

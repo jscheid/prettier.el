@@ -568,7 +568,6 @@ With prefix, ask for the parser to use"
   (maphash (lambda (_key process)
              (quit-process process))
            prettier-processes)
-  (clrhash prettier-processes)
   (setq prettier-nvm-node-command-cache nil))
 
 (defun prettier-restart ()
@@ -587,15 +586,21 @@ files open in Emacs; or when you change Prettier settings that
 might affect any open files."
   (interactive)
   (prettier--quit-all-processes)
-  (unless (eq prettier-pre-warm 'none)
-    (mapc (lambda (buf)
-            (with-current-buffer buf
-              (when (and (boundp 'prettier-mode)
-                         prettier-mode)
-                (prettier--get-process
-                 (eq prettier-pre-warm 'full)))))
-          (buffer-list)))
-  (message "Prettier restart complete."))
+  (let* (wait-timer
+         (callback
+          (lambda ()
+            (when (zerop (hash-table-count prettier-processes))
+              (cancel-timer wait-timer)
+              (unless (eq prettier-pre-warm 'none)
+                (mapc (lambda (buf)
+                        (with-current-buffer buf
+                          (when (and (boundp 'prettier-mode)
+                                     prettier-mode)
+                            (prettier--get-process
+                             (eq prettier-pre-warm 'full)))))
+                      (buffer-list)))
+              (message "Prettier restart complete.")))))
+    (setq wait-timer (run-with-timer 0.1 0.1 callback))))
 
 (defun prettier--buffer-remote-p (&optional identification connected)
   "Return `file-remote-p' result for the current buffer.

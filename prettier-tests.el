@@ -13,10 +13,12 @@
 
 
 (require 'ert)
-(require 'ert-async)
 (require 'noflet)
 (require 'thingatpt)
 (require 'prettier)
+
+(eval-when-compile
+  (require 'ert-async))
 
 (setq prettier-el-home (concat
                         (file-name-directory load-file-name)
@@ -114,20 +116,20 @@
 
 (ert-deftest-async restart-prettier (done)
   (prettier--quit-all-processes)
-    (delay
-     (lambda ()
-       (with-current-buffer (get-buffer-create "test.js")
-         (js-mode)
-         (should (not (any-prettier-process-p)))
-         (prettier-mode)
-         (delay
-          (lambda ()
-            (should (any-prettier-process-p))
-            (prettier-restart)
-            (delay
-             (lambda ()
-               (should (any-prettier-process-p))
-               (funcall done)))))))))
+  (delay
+   (lambda ()
+     (with-current-buffer (get-buffer-create "test.js")
+       (js-mode)
+       (should (not (any-prettier-process-p)))
+       (prettier-mode)
+       (delay
+        (lambda ()
+          (should (any-prettier-process-p))
+          (prettier-restart)
+          (delay
+           (lambda ()
+             (should (any-prettier-process-p))
+             (funcall done)))))))))
 
 (provide 'prettier-tests)
 

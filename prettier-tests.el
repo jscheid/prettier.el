@@ -2,7 +2,7 @@
 
 ;; Copyright (c) 2018-present Julian Scheid
 
-;; Package-Requires: ((web-mode "20200501") (elm-mode "20200406") (pug-mode "20180513") (svelte-mode "20200327") (toml-mode "20161107") (solidity-mode "20200418") (vue-mode "20190415") (lsp-mode "20201111") (noflet "20141102") (f "20191110"))
+;; Package-Requires: ((web-mode "20200501") (elm-mode "20200406") (pug-mode "20180513") (svelte-mode "20200327") (toml-mode "20161107") (solidity-mode "20200418") (vue-mode "20190415") (lsp-mode "20201111") (noflet "20141102") (f "20191110") (ert-async "0.1"))
 
 ;;; Commentary:
 
@@ -16,6 +16,9 @@
 (require 'noflet)
 (require 'thingatpt)
 (require 'prettier)
+
+(eval-when-compile
+  (require 'ert-async))
 
 (setq prettier-el-home (concat
                         (file-name-directory load-file-name)
@@ -96,6 +99,37 @@
   (customize-option 'prettier-enabled-parsers)
   (customize-option 'prettier-mode-ignore-buffer-function)
   (customize-option 'prettier-lighter))
+
+(defun prettier-process-p (process)
+  "Return non-nil if PROCESS is like a Prettier process."
+  (and (string-match "^prettier" (process-name process))
+       (process-get process :server-id)
+       (process-live-p process)))
+
+(defun any-prettier-process-p ()
+  "Return non-nil if any process is like a Prettier process."
+  (seq-some #'prettier-process-p (process-list)))
+
+(defun delay (callback)
+  "Call CALLBACK delayed by a little while."
+  (run-at-time 0.5 nil callback))
+
+(ert-deftest-async restart-prettier (done)
+  (prettier--quit-all-processes)
+  (delay
+   (lambda ()
+     (with-current-buffer (get-buffer-create "test.js")
+       (js-mode)
+       (should (not (any-prettier-process-p)))
+       (prettier-mode)
+       (delay
+        (lambda ()
+          (should (any-prettier-process-p))
+          (prettier-restart)
+          (delay
+           (lambda ()
+             (should (any-prettier-process-p))
+             (funcall done)))))))))
 
 (provide 'prettier-tests)
 

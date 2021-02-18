@@ -119,10 +119,10 @@ function makeU32(val) {
 }
 
 /**
- * Find a globally installed Prettier. Throw if not found. Memoize results for
+ * Find a globally installed Prettier or error if not found. Memoize results for
  * future lookups.
  *
- * @return {!PrettierAPI}
+ * @return {!PrettierAPI | !Error}
  */
 function getGlobalPrettier() {
   if (globalPrettier) {
@@ -163,8 +163,7 @@ function getGlobalPrettier() {
   for (let i = 0; i < pathOptions.length; ++i) {
     if (pathOptions[i]) {
       try {
-        globalPrettier = globalRequire(pathOptions[i]);
-        break;
+        return globalRequire(pathOptions[i]);
       } catch (e) {
         if (
           !(e instanceof Error) ||
@@ -173,19 +172,15 @@ function getGlobalPrettier() {
             e["code"]
           )
         ) {
-          throw e;
+          return e;
         }
       }
     }
   }
 
-  if (globalPrettier) {
-    return globalPrettier;
-  } else {
-    throw new Error(
-      "Cannot find prettier anywhere, check troubleshooting instructions."
-    );
-  }
+  return new Error(
+    "Cannot find prettier anywhere, check troubleshooting instructions."
+  );
 }
 
 /**
@@ -286,28 +281,33 @@ function getLocalPrettier(directory) {
  * @param {!string} directory The directory for which to find the Prettier
  *    package.
  *
- * @return {!PrettierAPI} The Prettier package found.
+ * @return {!PrettierAPI | !Error}
  */
 function getPrettierForDirectory(directory) {
-  const cached = prettierCache.get(directory);
-  if (cached) return cached;
+  if (prettierCache.has(directory)) {
+    return prettierCache.get(directory);
+  }
 
-  if (fs["existsSync"](path["join"](directory, "package.json"))) {
-    const prettier = getLocalPrettier(directory);
-    if (prettier) {
-      prettierCache.set(directory, prettier);
-      return prettier;
+  let prettier;
+  try {
+    if (fs["existsSync"](path["join"](directory, "package.json"))) {
+      prettier = getLocalPrettier(directory);
     }
+
+    if (!prettier) {
+      const parent = path["dirname"](directory);
+      if (parent !== directory) {
+        prettier = getPrettierForDirectory(parent);
+      } else {
+        prettier = getGlobalPrettier();
+      }
+    }
+  } catch (e) {
+    prettier = e;
   }
 
-  const parent = path["dirname"](directory);
-  if (parent !== directory) {
-    return getPrettierForDirectory(parent);
-  } else {
-    const prettier = getGlobalPrettier();
-    prettierCache.set(directory, prettier);
-    return prettier;
-  }
+  prettierCache.set(directory, prettier);
+  return prettier;
 }
 
 /**
@@ -320,16 +320,13 @@ function getPrettierForDirectory(directory) {
  * @return {!PrettierAPI} The Prettier package found.
  */
 function getPrettierForPath(filepath) {
-  if (!path["isAbsolute"](filepath)) {
-    return getGlobalPrettier();
+  const result = path["isAbsolute"](filepath)
+    ? getPrettierForDirectory(path["dirname"](filepath))
+    : getGlobalPrettier();
+  if (result instanceof Error) {
+    throw result;
   }
-  let prettierPath = prettierCache.get(filepath);
-  if (!prettierPath) {
-    const directory = path["dirname"](filepath);
-    prettierPath = getPrettierForDirectory(directory);
-    prettierCache.set(filepath, prettierPath);
-  }
-  return prettierPath;
+  return result;
 }
 
 function parseParsers(parsersString) {

@@ -1221,7 +1221,7 @@ formatting."
          (process-buf (process-buffer (prettier--get-process)))
          (start-point (copy-marker (or start (point-min)) nil))
          (end-point (copy-marker (or end (point-max)) t))
-         (point-before (point))
+         (point-before (copy-marker (point)))
          (filename (prettier--local-file-name))
          (tempfile (make-nearby-temp-file "prettier-emacs."))
          result-point

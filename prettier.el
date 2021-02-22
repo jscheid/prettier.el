@@ -1222,7 +1222,6 @@ formatting."
          (start-point (copy-marker (or start (point-min)) nil))
          (end-point (copy-marker (or end (point-max)) t))
          (point-before (point))
-         (point-end-p (eq point-before (point-max)))
          (filename (prettier--local-file-name))
          (tempfile (make-nearby-temp-file "prettier-emacs."))
          result-point

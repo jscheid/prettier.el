@@ -447,17 +447,9 @@ function bestParser(prettier, parsers, options, filepath, inferParser) {
       newlineIndex1 + 1,
       newlineIndex2
     );
-    const newlineIndex3 = packet.indexOf(10, newlineIndex2 + 1);
-    if (newlineIndex3 < 0) {
-      protocolError();
-    }
 
-    const cursorOffset = parseInt(
-      packet.toString("ascii", newlineIndex2 + 1, newlineIndex3),
-      16
-    );
     const filename = packet
-      .slice(newlineIndex3 + 1, packet.length - 2)
+      .slice(newlineIndex2 + 1, packet.length - 2)
       .toString("ascii");
 
     const body = fs["readFileSync"](filename, "utf8");
@@ -501,16 +493,15 @@ function bestParser(prettier, parsers, options, filepath, inferParser) {
         return;
       }
 
-      options["cursorOffset"] = cursorOffset;
       options["filepath"] = filepath;
       options["rangeStart"] = undefined;
       options["rangeEnd"] = undefined;
       options["parser"] = parser;
 
-      const result = prettier.formatWithCursor(body, options);
+      const result = prettier.format(body, options);
 
       const timeAfterFormat = Date.now();
-      const diffResult = new diff().diff_main(body, result["formatted"]);
+      const diffResult = new diff().diff_main(body, result);
 
       for (let index = 0; index < diffResult.length; index++) {
         const [kind, str] = diffResult[index];
@@ -545,11 +536,6 @@ function bestParser(prettier, parsers, options, filepath, inferParser) {
       }
       out.push(createResponseHeader("T", timeAfterFormat));
       out.push(createResponseHeader("T", timeBeforeFormat));
-
-      var newCursorOffset = result["cursorOffset"];
-      if (Number.isFinite(newCursorOffset) && newCursorOffset >= 0) {
-        out.push(createResponseHeader("C", newCursorOffset));
-      }
       out.push(Z);
       process.stdout.write(Buffer.concat(out));
     } catch (e) {

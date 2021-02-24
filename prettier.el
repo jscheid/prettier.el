@@ -1068,7 +1068,7 @@ close to post-formatting as possible."
                            (goto-char p)
                            (when
                                (looking-at
-                                "\\([CDEIMOPTVZ]\\)\\([[:xdigit:]]+\\)\n")
+                                "\\([DEIMOPTVZ]\\)\\([[:xdigit:]]+\\)\n")
                              (let* ((m (match-end 0))
                                     (kind (string-to-char
                                            (match-string 1)))
@@ -1176,13 +1176,11 @@ TIMESTAMPS is additional information received from the server."
        (* (- total prettier) 1000)))))
 
 (defun prettier--format-iter (parsers
-                              relative-point
                               filename
                               tempfile)
   "Launch format operation remotely and return iterator.
 
-PARSERS are the enabled parsers, RELATIVE-POINT the location of
-point relative to the start of region.  FILENAME is the original
+PARSERS are the enabled parsers, FILENAME is the original
 filename and TEMPFILE is where the buffer contents before
 formatting are stored."
   (prettier--request-iter
@@ -1197,7 +1195,6 @@ formatting are stored."
               (mapcar #'symbol-name parsers)
               ",")
            "-")
-    "\n" (format "%X" (or relative-point 1))
     "\n" (prettier--pick-localname tempfile)
     "\n\n")))
 
@@ -1224,11 +1221,7 @@ formatting."
          (process-buf (process-buffer (prettier--get-process)))
          (start-point (copy-marker (or start (point-min)) nil))
          (end-point (copy-marker (or end (point-max)) t))
-         (point-before (point))
-         (point-end-p (eq point-before (point-max)))
-         (relative-point (and (>= point-before start-point)
-                              (<= point-before end-point)
-                              (- point-before start-point)))
+         (point-before (copy-marker (point)))
          (filename (prettier--local-file-name))
          (tempfile (make-nearby-temp-file "prettier-emacs."))
          result-point
@@ -1236,7 +1229,6 @@ formatting."
          timestamps
          (buffer-undo-list-backup buffer-undo-list)
          (iter (prettier--format-iter parsers
-                                      relative-point
                                       filename
                                       tempfile)))
     (unwind-protect
@@ -1283,13 +1275,7 @@ formatting."
                               (funcall command-str))))
 
                      ((eq kind ?V)
-                      (setq prettier-version (funcall command-str)))
-
-                     ((eq kind ?C)
-                      (when relative-point
-                        (setq result-point (if point-end-p
-                                               (point-max)
-                                             (cdr command)))))))))
+                      (setq prettier-version (funcall command-str)))))))
             ((quit error)
              (ignore-errors
                (setq any-errors t)

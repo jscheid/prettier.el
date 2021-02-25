@@ -493,6 +493,9 @@ For debugging only.")
 
 For debugging and performance tuning only.")
 
+(defvar prettier-timeout-seconds 20
+  "Number of seconds before aborting and restarting Prettier.")
+
 (defvar prettier-processes (make-hash-table :test 'equal)
   "Keep track of running node processes, keyed by `node-command'.
 It's the name or path of the node executable `prettier--find-node'
@@ -1053,8 +1056,7 @@ close to post-formatting as possible."
                                      &optional fire-and-forget-p)
   "Send REQUEST to PRETTIER-PROCESS, yield commands."
   (condition-case err
-      (let* ((p (point-min))
-             (buf (process-buffer prettier-process)))
+      (let (p (buf (process-buffer prettier-process)))
         (process-send-string prettier-process
                              (apply #'concat request))
         (unless fire-and-forget-p
@@ -1065,35 +1067,45 @@ close to post-formatting as possible."
                     (while
                         (null
                          (save-excursion
-                           (goto-char p)
-                           (when
-                               (looking-at
-                                "\\([DEIMOPTVZ]\\)\\([[:xdigit:]]+\\)\n")
-                             (let* ((m (match-end 0))
-                                    (kind (string-to-char
-                                           (match-string 1)))
-                                    (len (string-to-number
-                                          (match-string 2)
-                                          16)))
-                               (cond
-                                ((eq kind ?Z)
-                                 (setq p m)
-                                 (throw 'end-of-message nil))
-                                ((member kind '(?I ?O ?E ?V ?P))
-                                 (when (<= (+ m len) (point-max))
-                                   (iter-yield
-                                    (cons kind (list m (+ m len))))
-                                   (setq p (+ m len 1))))
-                                (t (setq p m)
-                                   (iter-yield (cons kind len))
-                                   t))))))
-                      (tramp-accept-process-output prettier-process
-                                                   10)
+                           (goto-char (or p (point-min)))
+                           (and
+                            (or p (setq p (re-search-forward
+                                           "#prettier\.el-sync#\n" nil t)))
+                            (looking-at
+                             "\\([DEIMOPTVZ]\\)\\([[:xdigit:]]+\\)\n")
+                            (let* ((m (match-end 0))
+                                   (kind (string-to-char
+                                          (match-string 1)))
+                                   (len (string-to-number
+                                         (match-string 2)
+                                         16)))
+                              (cond
+                               ((eq kind ?Z)
+                                (setq p m)
+                                (throw 'end-of-message nil))
+                               ((member kind '(?I ?O ?E ?V ?P))
+                                (when (<= (+ m len) (point-max))
+                                  (iter-yield
+                                   (cons kind (list m (+ m len))))
+                                  (setq p (+ m len 1))))
+                               (t (setq p m)
+                                  (iter-yield (cons kind len))
+                                  t))))))
+                      (let ((len (point-max)))
+                        (when
+                            (and
+                             (null (tramp-accept-process-output
+                                    prettier-process
+                                    prettier-timeout-seconds))
+                             (eq len (point-max)))
+                          (error  "Prettier timed out after %s seconds"
+                                  prettier-timeout-seconds)))
                       (when (eq (process-status prettier-process)
                                 'exit)
                         (error "Node sub-process died"))))))
-            (with-current-buffer buf
-              (delete-region 1 p)))))
+            (when p
+              (with-current-buffer buf
+                (delete-region 1 p))))))
     ((quit error)
      ;; FIXME: need more efficient recovery from quit
      (quit-process prettier-process)

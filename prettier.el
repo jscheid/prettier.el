@@ -1092,14 +1092,13 @@ close to post-formatting as possible."
                                   (iter-yield (cons kind len))
                                   t))))))
                       (let ((len (point-max)))
-                        (when
-                            (and
-                             (null (tramp-accept-process-output
-                                    prettier-process
-                                    prettier-timeout-seconds))
-                             (eq len (point-max)))
-                          (error  "Prettier timed out after %s seconds"
-                                  prettier-timeout-seconds)))
+                        (and
+                         (null (tramp-accept-process-output
+                                prettier-process
+                                prettier-timeout-seconds))
+                         (eq len (point-max))
+                         (error  "Prettier timed out after %s seconds"
+                                 prettier-timeout-seconds)))
                       (when (eq (process-status prettier-process)
                                 'exit)
                         (error "Node sub-process died"))))))

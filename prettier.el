@@ -54,7 +54,7 @@
 
   (defun prettier--readme-link (anchor)
     "Return the URL of the Readme section identified by ANCHOR."
-    (concat "https://github.com/jscheid/prettier.el/README#"
+    (concat "https://github.com/jscheid/prettier.el/README.md#"
             anchor)))
 
 

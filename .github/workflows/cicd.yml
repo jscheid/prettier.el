@@ -85,9 +85,9 @@ jobs:
       - name: Build and Test
         if: always() # Run test even if linting fails.
         run: |
-          echo "$SHELL"
           set -x
-          make && ./makem.sh -vv --sandbox=$SANDBOX_DIR test
+          make
+          ./makem.sh -vv --sandbox=$SANDBOX_DIR test
           version=$(awk 'END {gsub(/"/, "", $3); print $3}' < dist/prettier-pkg.el)
           tar cf prettier.tar --transform="s,^dist/,prettier-${version}/," dist/*
           ls -ld prettier.tar

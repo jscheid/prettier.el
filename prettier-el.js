@@ -47,6 +47,8 @@ const otherParserName = new Map([
 
 const ignoreParser = "ignored";
 
+const syncBeacon = Buffer.from("#prettier.el-sync#\n");
+
 /** @type{PrettierAPI} */
 let globalPrettier;
 
@@ -390,6 +392,7 @@ function bestParser(prettier, parsers, options, filepath, inferParser) {
 
     process.stdout.write(
       Buffer.concat([
+        syncBeacon,
         createResponseHeader("E", errBuf.length),
         errBuf,
         newline,
@@ -476,7 +479,7 @@ function bestParser(prettier, parsers, options, filepath, inferParser) {
         inferParser
       );
 
-      const out = [];
+      const out = [syncBeacon];
 
       const prettierVersion = createBase64Buffer(prettier.version);
       const parserBuf = createBase64Buffer(parser || "none");
@@ -607,6 +610,7 @@ function bestParser(prettier, parsers, options, filepath, inferParser) {
       const optionsBuf = createBase64Buffer(optionsStr);
       process.stdout.write(
         Buffer.concat([
+          syncBeacon,
           createResponseHeader("O", optionsBuf.length),
           optionsBuf,
           newline,

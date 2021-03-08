@@ -66,7 +66,11 @@
     `(ert-deftest
          ,(intern (format "prettier-test-%s" (file-name-base test-directory))) ()
        ,(format "Run tests in %S." test-directory)
-       (prettier--run-test-case ,test-directory))))
+       (condition-case err
+           (prettier--run-test-case ,test-directory)
+         ((quit error)
+          (sit-for 0.25)
+          (signal (car err) (cdr err)))))))
  (mapcar
   #'car
   (seq-filter

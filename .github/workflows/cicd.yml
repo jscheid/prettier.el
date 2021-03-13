@@ -63,7 +63,7 @@ jobs:
         run: npm install
 
       - name: Install additional packages
-        run: sudo apt-get -y install aspell python3 python3-setuptools texinfo
+        run: sudo apt-get -y install aspell python3 python3-setuptools texinfo ruby
 
       - name: Install pandoc 2
         run: |
@@ -71,7 +71,7 @@ jobs:
           sudo dpkg -i pandoc-2.9.2.1-1-amd64.deb
 
       - name: Install panflute
-        run: sudo pip3 install panflute
+        run: sudo pip3 install 'panflute==1.12.5'
 
       - name: Lint
         run: ./makem.sh -vv --sandbox=$SANDBOX_DIR lint-checkdoc lint-compile lint-declare lint-package lint-regexps
@@ -84,8 +84,9 @@ jobs:
       - name: Build and Test
         if: always() # Run test even if linting fails.
         run: |
-          set -eou pipefail
-          make && ./makem.sh -vv --sandbox=$SANDBOX_DIR test
+          set -x
+          make
+          ./makem.sh -vv --sandbox=$SANDBOX_DIR test
           version=$(awk 'END {gsub(/"/, "", $3); print $3}' < dist/prettier-pkg.el)
           tar cf prettier.tar --transform="s,^dist/,prettier-${version}/," dist/*
           ls -ld prettier.tar

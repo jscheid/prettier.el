@@ -13,6 +13,7 @@ Top
 ***
 
 <https://melpa.org/#/prettier>
+<https://github.com/jscheid/prettier.el/actions/workflows/cicd.yml?query=branch%3Amaster>
 
 The ‘prettier’ Emacs package reformats your code by running Prettier
 (https://github.com/prettier/prettier) with minimal overhead, by request
@@ -360,46 +361,46 @@ GNU Public License v3 or any later version (see <COPYING>)
 
 Tag Table:
 Node: Top196
-Node: Installation1217
-Ref: #installation1336
-Node: Troubleshooting2385
-Ref: #troubleshooting2492
-Node: Configuration2884
-Ref: #configuration3007
-Node: Enabling per-file / per-directory3509
-Ref: #enabling-per-file-per-directory3671
-Node: Usage4721
-Ref: #usage4829
-Node: Changing Prettier Configuration5412
-Ref: #changing-prettier-configuration5586
-Node: On Remote Servers6021
-Ref: #on-remote-servers6167
-Node: Customization7001
-Ref: #customization7143
-Node: prettier-mode-sync-config-flag7430
-Ref: #prettier-mode-sync-config-flag7626
-Node: prettier-editorconfig-flag7753
-Ref: #prettier-editorconfig-flag7974
-Node: prettier-enabled-parsers8076
-Ref: #prettier-enabled-parsers8289
-Node: prettier-infer-parser-flag8353
-Ref: #prettier-infer-parser-flag8571
-Node: prettier-inline-errors-flag8704
-Ref: #prettier-inline-errors-flag8917
-Node: prettier-pre-warm9130
-Ref: #prettier-pre-warm9333
-Node: prettier-mode-ignore-buffer-function9668
-Ref: #prettier-mode-ignore-buffer-function9903
-Node: prettier-mode-lighter10231
-Ref: #prettier-mode-lighter10410
-Node: Differences from prettier-emacs10584
-Ref: #differences-from-prettier-emacs10772
-Node: Credits12183
-Ref: #credits12322
-Node: Building from source12439
-Ref: #building-from-source12580
-Node: License12691
-Ref: #license12790
+Node: Installation1307
+Ref: #installation1426
+Node: Troubleshooting2475
+Ref: #troubleshooting2582
+Node: Configuration2974
+Ref: #configuration3097
+Node: Enabling per-file / per-directory3599
+Ref: #enabling-per-file-per-directory3761
+Node: Usage4811
+Ref: #usage4919
+Node: Changing Prettier Configuration5502
+Ref: #changing-prettier-configuration5676
+Node: On Remote Servers6111
+Ref: #on-remote-servers6257
+Node: Customization7091
+Ref: #customization7233
+Node: prettier-mode-sync-config-flag7520
+Ref: #prettier-mode-sync-config-flag7716
+Node: prettier-editorconfig-flag7843
+Ref: #prettier-editorconfig-flag8064
+Node: prettier-enabled-parsers8166
+Ref: #prettier-enabled-parsers8379
+Node: prettier-infer-parser-flag8443
+Ref: #prettier-infer-parser-flag8661
+Node: prettier-inline-errors-flag8794
+Ref: #prettier-inline-errors-flag9007
+Node: prettier-pre-warm9220
+Ref: #prettier-pre-warm9423
+Node: prettier-mode-ignore-buffer-function9758
+Ref: #prettier-mode-ignore-buffer-function9993
+Node: prettier-mode-lighter10321
+Ref: #prettier-mode-lighter10500
+Node: Differences from prettier-emacs10674
+Ref: #differences-from-prettier-emacs10862
+Node: Credits12273
+Ref: #credits12412
+Node: Building from source12529
+Ref: #building-from-source12670
+Node: License12781
+Ref: #license12880
 
 End Tag Table
 

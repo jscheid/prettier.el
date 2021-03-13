@@ -1,6 +1,6 @@
 # prettier.el
 
-[![MELPA](https://melpa.org/packages/prettier-badge.svg)](https://melpa.org/#/prettier) ![CI](https://github.com/jscheid/prettier.el/workflows/CI/badge.svg)
+[![MELPA](https://melpa.org/packages/prettier-badge.svg)](https://melpa.org/#/prettier) [![CI](https://github.com/jscheid/prettier.el/workflows/CI/badge.svg)](https://github.com/jscheid/prettier.el/actions/workflows/cicd.yml?query=branch%3Amaster)
 
 The `prettier` Emacs package reformats your code by running
 [Prettier](https://github.com/prettier/prettier) with minimal overhead,

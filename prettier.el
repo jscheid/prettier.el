@@ -826,9 +826,10 @@ Additional considerations were:
      (lambda (proc event)
        (unless (and (eq (process-status proc) 'signal)
                     (eq (process-exit-status proc) 3))
-         (message "prettier-process (%s) quit unexpectedly: %s"
+         (message "prettier-process (%s) quit unexpectedly: %s (%s)"
                   (process-get proc :server-id)
-                  (string-trim event)))
+                  (string-trim event)
+                  (buffer-string)))
        (unless prettier-keep-server-buffer-flag
          (kill-buffer (process-buffer proc)))
        (remhash node-command prettier-processes)))
@@ -1382,6 +1383,9 @@ for derived modes.)"
         (or (and (fboundp 'mhtml-mode)
                  (get-text-property (point) 'mhtml-submode)
                  'mhtml-mode)
+            (and (fboundp 'svelte-mode)
+                 (get-text-property (point) 'svelte-submode)
+                 'svelte-mode)
             (and (boundp 'mmm-primary-mode)
                  mmm-primary-mode)
             major-mode)))))

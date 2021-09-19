@@ -153,6 +153,8 @@ Requires Prettier 1.9+."
                                       html
                                       java
                                       json
+                                      json5
+                                      json-stringify
                                       less
                                       lua
                                       markdown

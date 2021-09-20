@@ -1,9 +1,6 @@
 (progn
-  (backtrace)
-  (message "1 %S %S" major-mode (buffer-name))
   (let ((noninteractive nil))
     (mmm-mode-on))
-  (message "2")
   (goto-char 57)
   (mmm-update-submode-region))
 

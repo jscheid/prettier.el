@@ -45,6 +45,7 @@
                 (insert-file-contents original-file)
                 (setq buffer-file-name original-file)
                 (rename-buffer original-file)
+                (prettier--eval-file-if-exists "prepare.elisp")
                 (set-auto-mode)
                 (prettier--eval-file-if-exists "setup.elisp")
                 (prettier-prettify)

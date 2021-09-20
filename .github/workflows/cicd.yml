@@ -81,6 +81,11 @@ jobs:
         run: |
           echo "VERSION_SUFFIX=-4" >> $GITHUB_ENV
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
+
       - name: Build and Test
         if: always() # Run test even if linting fails.
         run: |

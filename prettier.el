@@ -55,7 +55,13 @@
   (defun prettier--readme-link (anchor)
     "Return the URL of the Readme section identified by ANCHOR."
     (concat "https://github.com/jscheid/prettier.el#"
-            anchor)))
+            anchor))
+
+  ;; Fallback for Emacs < 27
+  (defmacro prettier--combine-change-calls (beg end &rest body)
+    (if (fboundp 'combine-change-calls)
+        `(combine-change-calls ,beg ,end ,@body)
+      `(when (>= ,end ,beg) (combine-after-change-calls ,@body)))))
 
 
 ;;;; Customization
@@ -508,6 +514,26 @@ returns.")
 
 (defvar prettier-parser-history nil
   "History for `prettier--read-parsers'.")
+
+(defvar prettier-min-batch-gap 100
+  "Minimum length of a gap for starting a new change batch.
+
+When grouping the changes resulting from a formatting operation
+into batches, for purposes of reducing the number of invocations
+of `before-change' and `after-change' hooks, a gap of this many
+characters will cause a new batch to be started.
+
+The smaller this number, the more batches will be applied, with
+the downside being that the hooks might be invoked too
+frequently.  The larger this number, the fewer batches will be
+applied, with the downside being that the hooks might be called
+with a needlessly large region.
+
+If this is set to one or less, only consecutive delete/insert
+pairs will be grouped into a batch.
+
+The ideal number for this setting depends on the nature of the
+functions that get called in the hooks.")
 
 ;;;;; Local Variables
 
@@ -1223,6 +1249,32 @@ received."
        (buffer-substring-no-properties (nth 0 range)
                                        (nth 1 range))))))
 
+(defun prettier--apply-change-batch (batch beg end num-inserted)
+  "Apply each change in BATCH.
+
+The batch is a reversed list of changes, where each change is a
+cons cell whose car is ?I for insert, ?M for move, or ?D for
+delete.  For insert, the cdr is the text to insert.  For move and
+delete, the cdr is the number of characters.
+
+BEG and END are the bounds of the change for use with
+`combine-change-calls'.  NUM-INSERTED is the total number
+of characters inserted, which is used to adjust END to match
+Emacs behavior when determining the range of a change."
+  (when batch
+    (prettier--combine-change-calls
+     beg
+     (if (> num-inserted 1) (max (1+ beg) end) end)
+     (mapc
+      (lambda (change)
+        (let ((kind (car change))
+              (arg (cdr change)))
+          (cond
+           ((eq kind ?I) (insert arg))
+           ((eq kind ?M) (forward-char arg))
+           ((eq kind ?D) (delete-region (point) (+ (point) arg))))))
+      (nreverse batch)))))
+
 (defun prettier--prettify (&optional
                            parsers
                            start
@@ -1242,6 +1294,20 @@ formatting."
          any-errors
          timestamps
          (buffer-undo-list-backup buffer-undo-list)
+         change-batch
+         change-start
+         change-end
+         (change-num-inserted 0)
+         (num-batches 0)
+         (apply-batch
+          (lambda ()
+            (when change-batch
+              (cl-incf num-batches))
+            (prettier--apply-change-batch
+             change-batch
+             change-start
+             change-end
+             change-num-inserted)))
          (iter (prettier--format-iter parsers
                                       filename
                                       tempfile)))
@@ -1265,14 +1331,31 @@ formatting."
                            (prettier--payload process-buf command))))
                     (cond
                      ((eq kind ?M)
-                      (forward-char (cdr command)))
+                      (let ((distance (cdr command)))
+                        (if (or (null change-batch)
+                                (>= distance prettier-min-batch-gap))
+                            (progn
+                              (funcall apply-batch)
+                              (setq change-batch nil
+                                    change-num-inserted 0)
+                              (forward-char distance))
+                          (push command change-batch)
+                          (cl-incf change-end distance))))
 
                      ((eq kind ?I)
-                      (insert (funcall command-str)))
+                      (let ((payload (funcall command-str)))
+                        (unless change-batch
+                          (setq change-start (point)
+                                change-end change-start))
+                        (push (cons ?I payload) change-batch)
+                        (cl-incf change-num-inserted (length payload))))
 
                      ((eq kind ?D)
-                      (delete-region (point)
-                                     (+ (point) (cdr command))))
+                      (unless change-batch
+                        (setq change-start (point)
+                              change-end change-start))
+                      (push command change-batch)
+                      (cl-incf change-end (cdr command)))
 
                      ((eq kind ?T)
                       (push (/ (cdr command) 1000.0) timestamps))
@@ -1289,7 +1372,8 @@ formatting."
                               (funcall command-str))))
 
                      ((eq kind ?V)
-                      (setq prettier-version (funcall command-str)))))))
+                      (setq prettier-version (funcall command-str))))))
+                (funcall apply-batch))
             ((quit error)
              (ignore-errors
                (setq any-errors t)

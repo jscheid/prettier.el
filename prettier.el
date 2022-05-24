@@ -147,6 +147,18 @@ Requires Prettier 1.9+."
 ;;;###autoload
 (put 'prettier-infer-parser-flag 'safe-local-variable 'booleanp)
 
+(defcustom prettier-prettify-on-save-flag t
+  "Non-nil means to prettify (format) buffer on save."
+  :type 'boolean
+  :package-version '(prettier . "1.3.0")
+  :group 'prettier
+  :link '(info-link "(prettier)prettier-prettify-on-save-flag")
+  :link `(url-link ,(eval-when-compile
+                      (prettier--readme-link
+                       "prettier-prettify-on-save-flag"))))
+;;;###autoload
+(put 'prettier-prettify-on-save-flag 'safe-local-variable 'booleanp)
+
 (defcustom prettier-enabled-parsers '(angular
                                       babel
                                       babel-flow
@@ -658,6 +670,11 @@ IDENTIFICATION and CONNECTED have the same meaning as
         (insert-file-contents src))
       (package-buffer-info)))))
 
+(defun prettier--maybe-prettify-on-save ()
+  "Prettify, but only if `prettier-prettify-on-save-flag' is set."
+  (when prettier-prettify-on-save-flag
+    (prettier-prettify)))
+
 (defun prettier-info ()
   "Show a temporary buffer with diagnostic info.
 
@@ -709,7 +726,7 @@ should be used when filing bug reports."
                     'append
                     'local))
         (add-hook 'before-save-hook
-                  #'prettier-prettify
+                  #'prettier--maybe-prettify-on-save
                   nil
                   'local))
     (remove-hook 'before-save-hook

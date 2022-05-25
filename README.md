@@ -162,6 +162,12 @@ Customize this to disable any parsers you don't want to use.
 Set this to `nil` if you don't want Prettier to fall back to inferring
 the parser to use based on the file name and contents.
 
+### `prettier-prettify-on-save-flag`
+
+Set this to `nil` if you don't want Prettier to prettify (format) the buffer
+when saving. You can still format the buffer explicitly with
+`prettier-prettify`, which you might want to bind to a key.
+
 ### `prettier-inline-errors-flag`
 
 Set this to `t` if you want syntax errors to be shown inline instead of

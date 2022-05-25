@@ -208,6 +208,7 @@ M-x customize-group prettier
 * prettier-editorconfig-flag::
 * prettier-enabled-parsers::
 * prettier-infer-parser-flag::
+* prettier-prettify-on-save-flag::
 * prettier-inline-errors-flag::
 * prettier-pre-warm::
 * prettier-mode-ignore-buffer-function::
@@ -240,7 +241,7 @@ File: prettier.info,  Node: prettier-enabled-parsers,  Next: prettier-infer-pars
 Customize this to disable any parsers you don’t want to use.
 
 
-File: prettier.info,  Node: prettier-infer-parser-flag,  Next: prettier-inline-errors-flag,  Prev: prettier-enabled-parsers,  Up: Customization
+File: prettier.info,  Node: prettier-infer-parser-flag,  Next: prettier-prettify-on-save-flag,  Prev: prettier-enabled-parsers,  Up: Customization
 
 4.4 ‘prettier-infer-parser-flag’
 ================================
@@ -249,9 +250,19 @@ Set this to ‘nil’ if you don’t want Prettier to fall back to inferring
 the parser to use based on the file name and contents.
 
 
-File: prettier.info,  Node: prettier-inline-errors-flag,  Next: prettier-pre-warm,  Prev: prettier-infer-parser-flag,  Up: Customization
+File: prettier.info,  Node: prettier-prettify-on-save-flag,  Next: prettier-inline-errors-flag,  Prev: prettier-infer-parser-flag,  Up: Customization
 
-4.5 ‘prettier-inline-errors-flag’
+4.5 ‘prettier-prettify-on-save-flag’
+====================================
+
+Set this to ‘nil’ if you don’t want Prettier to prettify (format) the
+buffer when saving.  You can still format the buffer explicitly with
+‘prettier-prettify’, which you might want to bind to a key.
+
+
+File: prettier.info,  Node: prettier-inline-errors-flag,  Next: prettier-pre-warm,  Prev: prettier-prettify-on-save-flag,  Up: Customization
+
+4.6 ‘prettier-inline-errors-flag’
 =================================
 
 Set this to ‘t’ if you want syntax errors to be shown inline instead of
@@ -261,7 +272,7 @@ and won’t yet work well when the error is outside the window.
 
 File: prettier.info,  Node: prettier-pre-warm,  Next: prettier-mode-ignore-buffer-function,  Prev: prettier-inline-errors-flag,  Up: Customization
 
-4.6 ‘prettier-pre-warm’
+4.7 ‘prettier-pre-warm’
 =======================
 
 Choose how to pre-warm Prettier caches.
@@ -276,7 +287,7 @@ some on first save.
 
 File: prettier.info,  Node: prettier-mode-ignore-buffer-function,  Next: prettier-mode-lighter,  Prev: prettier-pre-warm,  Up: Customization
 
-4.7 ‘prettier-mode-ignore-buffer-function’
+4.8 ‘prettier-mode-ignore-buffer-function’
 ==========================================
 
 This function is called in every buffer that ‘prettier-mode’ supports.
@@ -288,7 +299,7 @@ buffers will be ignored.
 
 File: prettier.info,  Node: prettier-mode-lighter,  Prev: prettier-mode-ignore-buffer-function,  Up: Customization
 
-4.8 ‘prettier-mode-lighter’
+4.9 ‘prettier-mode-lighter’
 ===========================
 
 This Sexpr is evaluated as part of the modeline.  The default value
@@ -377,30 +388,32 @@ Node: On Remote Servers6111
 Ref: #on-remote-servers6257
 Node: Customization7091
 Ref: #customization7233
-Node: prettier-mode-sync-config-flag7520
-Ref: #prettier-mode-sync-config-flag7716
-Node: prettier-editorconfig-flag7843
-Ref: #prettier-editorconfig-flag8064
-Node: prettier-enabled-parsers8166
-Ref: #prettier-enabled-parsers8379
-Node: prettier-infer-parser-flag8443
-Ref: #prettier-infer-parser-flag8661
-Node: prettier-inline-errors-flag8794
-Ref: #prettier-inline-errors-flag9007
-Node: prettier-pre-warm9220
-Ref: #prettier-pre-warm9423
-Node: prettier-mode-ignore-buffer-function9758
-Ref: #prettier-mode-ignore-buffer-function9993
-Node: prettier-mode-lighter10321
-Ref: #prettier-mode-lighter10500
-Node: Differences from prettier-emacs10674
-Ref: #differences-from-prettier-emacs10862
-Node: Credits12273
-Ref: #credits12412
-Node: Building from source12529
-Ref: #building-from-source12670
-Node: License12781
-Ref: #license12880
+Node: prettier-mode-sync-config-flag7555
+Ref: #prettier-mode-sync-config-flag7751
+Node: prettier-editorconfig-flag7878
+Ref: #prettier-editorconfig-flag8099
+Node: prettier-enabled-parsers8201
+Ref: #prettier-enabled-parsers8414
+Node: prettier-infer-parser-flag8478
+Ref: #prettier-infer-parser-flag8699
+Node: prettier-prettify-on-save-flag8832
+Ref: #prettier-prettify-on-save-flag9064
+Node: prettier-inline-errors-flag9274
+Ref: #prettier-inline-errors-flag9491
+Node: prettier-pre-warm9704
+Ref: #prettier-pre-warm9907
+Node: prettier-mode-ignore-buffer-function10242
+Ref: #prettier-mode-ignore-buffer-function10477
+Node: prettier-mode-lighter10805
+Ref: #prettier-mode-lighter10984
+Node: Differences from prettier-emacs11158
+Ref: #differences-from-prettier-emacs11346
+Node: Credits12757
+Ref: #credits12896
+Node: Building from source13013
+Ref: #building-from-source13154
+Node: License13265
+Ref: #license13364
 
 End Tag Table
 

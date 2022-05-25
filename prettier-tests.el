@@ -142,8 +142,40 @@
 (ert-deftest load-local-config-once ()
   "Ensure config is loaded only once for buffer without file."
   (with-temp-buffer (js-mode) (prettier-mode))
-  (cl-flet ((prettier--load-config (&rest args) (error "Called again")))
+  (cl-flet ((prettier--load-config (&rest) (error "Called again")))
     (with-temp-buffer (js-mode) (prettier-mode))))
+
+(ert-deftest org-mode-src-block ()
+  "Formatting a source block in org mode."
+  (with-temp-buffer
+    (org-mode)
+    (setq buffer-file-name
+          (concat
+           prettier-el-home
+           "test.org"))
+    (insert "\
+Header
+
+#+begin_src js
+  if ( true ) {
+    console.log('Hello, World!');
+  }
+#+end_src
+
+Footer")
+    (goto-char 24)
+    (prettier-prettify-org-src-code-at-point)
+    (should (equal (buffer-string)
+                   "\
+Header
+
+#+begin_src js
+  if (true) {
+    console.log(\"Hello, World!\");
+  }
+#+end_src
+
+Footer"))))
 
 (provide 'prettier-tests)
 

@@ -1562,6 +1562,50 @@ parsers configured for it and it is a derived mode."
              (cons 'prettier prettier-compilation-regexps))
 (add-to-list 'compilation-error-regexp-alist 'prettier)
 
+(defun prettier-prettify-org-src-code-at-point ()
+  "Prettify the `org-mode' source block at point.
+
+With prefix, ask for the parser to use."
+  (interactive "*")
+  (eval-and-compile (require 'org-element))
+  (eval-and-compile (require 'org-src))
+  (let ((element (org-element-at-point)))
+    (unless (and (eq (org-element-type element) 'src-block)
+                 (org-src--on-datum-p element))
+      (user-error "Not in a source block"))
+    (let* ((lang (org-element-property :language element))
+           (parsers
+            (or (when current-prefix-arg
+                  (prettier--read-parsers))
+                (prettier--parsers-for-mode
+                 (funcall (or (cl-find-if
+                               #'fboundp
+                               (list
+                                ;; Dirty hack to get around linter
+                                (intern "org-src-get-lang-mode")
+                                (intern "org-src--get-lang-mode")))
+                              (error "Unsupported org version"))
+                          lang))))
+           (area (org-src--contents-area element))
+           (beg (nth 0 area))
+           (end (nth 1 area)))
+      (unless parsers
+        (user-error
+         "Could not determine Prettier parser for language %s"
+         lang))
+      (prettier--prettify parsers beg end)
+      (unless org-src-preserve-indentation
+        (eval-and-compile (require 'rect))
+        (indent-rigidly beg
+                        (max
+                         beg
+                         (save-excursion
+                           (goto-char end)
+                           (forward-line -1)
+                           (end-of-line)
+                           (point)))
+                        org-edit-src-content-indentation)))))
+
 
 ;;;; Ensure we're running latest JavaScript sub-process
 

@@ -1,0 +1,30 @@
+#
+# Run me with `docker compose up' to test running Prettier remotely
+# on Ubuntu 18.04.
+#
+
+version: "3.4"
+
+services:
+  #
+  # We're going to run Emacs in this container.
+  #
+  emacs:
+    build:
+      context: .
+      dockerfile: emacs.Dockerfile
+    depends_on:
+      - remote
+
+  #
+  # We're going to run Prettier in this container.
+  #
+  remote:
+    build:
+      context: .
+      dockerfile: remote.Dockerfile
+
+    # Allow logging into running container via SSH
+    # from the host. See file `ssh-config'.
+    ports:
+      - 2001:2001

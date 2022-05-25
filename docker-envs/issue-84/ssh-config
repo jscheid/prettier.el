@@ -1,0 +1,22 @@
+#
+# This config is used both on the host and in the `emacs' Docker
+# container (with some modifications.)
+#
+# On the host you can use this as follows:
+#
+# ssh -F ssh-config remote
+#
+
+Host remote
+  Hostname localhost
+  Port 2001
+  User test
+  IdentityFile id_rsa
+  IdentitiesOnly yes
+  StrictHostKeyChecking no
+  PasswordAuthentication no
+  UserKnownHostsFile /dev/null
+
+# Local Variables:
+# mode: Conf-Space
+# End:

@@ -139,6 +139,12 @@
              (should (any-prettier-process-p))
              (funcall done)))))))))
 
+(ert-deftest load-local-config-once ()
+  "Ensure config is loaded only once for buffer without file."
+  (with-temp-buffer (js-mode) (prettier-mode))
+  (cl-flet ((prettier--load-config (&rest args) (error "Called again")))
+    (with-temp-buffer (js-mode) (prettier-mode))))
+
 (provide 'prettier-tests)
 
 ;;; prettier-tests.el ends here

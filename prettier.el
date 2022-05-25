@@ -547,6 +547,9 @@ pairs will be grouped into a batch.
 The ideal number for this setting depends on the nature of the
 functions that get called in the hooks.")
 
+(defvar prettier--file-less-config-cache (make-hash-table)
+  "Cache for file-less Prettier configuration.")
+
 ;;;;; Local Variables
 
 (defvar-local prettier-parsers nil
@@ -802,12 +805,22 @@ Prettier parser name) or nil when nothing was selected."
 (defun prettier--maybe-sync-config ()
   "Sync Prettier configuration in current buffer when appropriate.
 
-Configuration is synced when `prettier-mode-sync-config-flag' is
-non-nil and `prettier' is enabled in current buffer."
+Configuration sync is attempted when
+`prettier-mode-sync-config-flag' is non-nil and `prettier' is
+enabled in current buffer.
+
+Any failures while loading or setting the configuration are
+ignored, a warning is printed in this case."
   (when (and prettier-mode
              prettier-mode-sync-config-flag)
-    (with-temp-message "Prettier syncing config"
-      (prettier--sync-config))))
+    (condition-case-unless-debug err
+        (let ((config (prettier--load-config-cached)))
+          (when config
+            (prettier--set-config config)))
+      ;; Ignore any errors but print a warning
+      ((debug error)
+       (message "Could not sync Prettier config, consider setting \
+`prettier-mode-sync-config-flag' to nil: %S" err)))))
 
 (defun prettier--create-process (server-id node-command)
   "Create a new server process for SERVER-ID.
@@ -1028,58 +1041,53 @@ separate window."
             (quit-window t win)
           (kill-buffer errbuf))))))
 
-(defun prettier--sync-config ()
+(defun prettier--set-config (config)
   "Try to sync prettier configuration for current buffer.
 
-Tries loading the configuration, ignoring failure with a message.
+CONFIG is the configuration loaded from Prettier, as returned
+by `prettier--load-config'.
 
-If loaded successfully, uses it to set a variety of buffer-local
-variables in an effort to make pre-formatting indentation etc as
-close to post-formatting as possible."
-  (condition-case-unless-debug err
-      (let* ((config (prettier--load-config))
-             (options (plist-get config :options)))
-        (setq
-         prettier-last-parser
-         (plist-get config :bestParser)
+It is used to set a variety of buffer-local variables in an
+effort to make pre-formatting indentation etc as close to
+post-formatting as possible."
+  (let ((options (plist-get config :options)))
+    (setq
+     prettier-last-parser
+     (plist-get config :bestParser)
 
-         prettier-version
-         (plist-get (plist-get config :versions) :prettier)
+     prettier-version
+     (plist-get (plist-get config :versions) :prettier)
 
-         prettier-previous-local-settings
-         (when options
-           (seq-filter
-            #'identity
-            (apply
-             #'append
-             (mapcar
-              (lambda (setting)
-                (let* ((vars (nth 0 setting))
-                       (source (nth 1 setting))
-                       (value (funcall
-                               (or (nth 2 setting) #'identity)
-                               (if (keywordp source)
-                                   (plist-get options source)
-                                 source))))
-                  (unless (eq value 'unchanged)
-                    (mapcar
-                     (lambda (var)
-                       (when (boundp var)
-                         (let ((result
-                                (list var (local-variable-p var)
-                                      (eval var)
-                                      value)))
-                           (set (make-local-variable var) value)
-                           result)))
-                     vars))))
-              prettier-sync-settings))))))
-    ;; Ignore any errors but print a warning
-    ((debug error)
-     (message "Could not sync Prettier config, consider setting \
-`prettier-mode-sync-config-flag' to nil: %S" err))))
+     prettier-previous-local-settings
+     (when options
+       (seq-filter
+        #'identity
+        (apply
+         #'append
+         (mapcar
+          (lambda (setting)
+            (let* ((vars (nth 0 setting))
+                   (source (nth 1 setting))
+                   (value (funcall
+                           (or (nth 2 setting) #'identity)
+                           (if (keywordp source)
+                               (plist-get options source)
+                             source))))
+              (unless (eq value 'unchanged)
+                (mapcar
+                 (lambda (var)
+                   (when (boundp var)
+                     (let ((result
+                            (list var (local-variable-p var)
+                                  (eval var)
+                                  value)))
+                       (set (make-local-variable var) value)
+                       result)))
+                 vars))))
+          prettier-sync-settings)))))))
 
 (defun prettier--revert-synced-config ()
-  "Revert any change made by `prettier--sync-config'."
+  "Revert any change made by `prettier--set-config'."
   (mapc
    (lambda (local-setting)
      (let ((var (car local-setting)))
@@ -1156,46 +1164,74 @@ close to post-formatting as possible."
      (quit-process prettier-process)
      (signal (car err) (cdr err)))))
 
-(defun prettier--load-config ()
-  "Load prettier configuration for current buffer."
-  (let* ((start-time (current-time))
-         (prettier-process (prettier--get-process))
-         (process-buf (process-buffer prettier-process))
-         (parsers (prettier--parsers))
-         (iter (prettier--request-iter
-                prettier-process
-                (list "o"
-                      (if prettier-editorconfig-flag "E" "e")
-                      (if prettier-infer-parser-flag "I" "i")
-                      (prettier--local-file-name)
-                      "\n" (if parsers (string-join
-                                        (mapcar #'symbol-name parsers)
-                                        ",")
-                             "-")
-                      "\n\n")))
-         config)
-    (unwind-protect
-        (progn
-          (iter-do (command iter)
-            (if (eq (car command) ?O)
-                (let* ((json-object-type 'plist)
-                       (json-false nil))
-                  (setq
-                   config
-                   (json-read-from-string
-                    (base64-decode-string
-                     (with-current-buffer process-buf
-                       (buffer-substring-no-properties
-                        (nth 1 command)
-                        (nth 2 command)))))))))
-          (when prettier-show-benchmark-flag
-            (message
-             "Prettier load-config took %.1fms"
-             (* 1000
-                (float-time (time-subtract (current-time)
-                                           start-time)))))
-          config)
-      (iter-close iter))))
+(defun prettier--load-config-cached ()
+  "Load prettier configuration for current buffer.
+
+If the current buffer is not associated with a file, and
+there are parsers for it, cache the configuration."
+  (let ((parsers (prettier--parsers)))
+    (cond
+     ((buffer-file-name) (prettier--load-config parsers))
+     ((null parsers) nil)
+     (t
+      (let* ((parsers (prettier--parsers))
+             (cache-key
+              (intern
+               (concat
+                (if prettier-editorconfig-flag "E" "e")
+                (string-join
+                 (mapcar #'symbol-name parsers))))))
+        (or (gethash cache-key prettier--file-less-config-cache)
+            (puthash cache-key
+                     (prettier--load-config parsers)
+                     prettier--file-less-config-cache)))))))
+
+(defun prettier--load-config (&optional override-parsers)
+  "Load prettier configuration for current buffer.
+
+If OVERRIDE-PARSERS is given, use it instead of the result of
+evaluating `(prettier--parsers)'.  This is meant to be used as an
+optimization for when the calling function has already determined
+the parsers."
+  (with-temp-message "Prettier syncing config"
+    (let* ((start-time (current-time))
+           (prettier-process (prettier--get-process))
+           (process-buf (process-buffer prettier-process))
+           (parsers (or override-parsers (prettier--parsers)))
+           (iter (prettier--request-iter
+                  prettier-process
+                  (list "o"
+                        (if prettier-editorconfig-flag "E" "e")
+                        (if prettier-infer-parser-flag "I" "i")
+                        (prettier--local-file-name)
+                        "\n" (if parsers (string-join
+                                          (mapcar #'symbol-name parsers)
+                                          ",")
+                               "-")
+                        "\n\n")))
+           config)
+      (unwind-protect
+          (progn
+            (iter-do (command iter)
+              (if (eq (car command) ?O)
+                  (let* ((json-object-type 'plist)
+                         (json-false nil))
+                    (setq
+                     config
+                     (json-read-from-string
+                      (base64-decode-string
+                       (with-current-buffer process-buf
+                         (buffer-substring-no-properties
+                          (nth 1 command)
+                          (nth 2 command)))))))))
+            (when prettier-show-benchmark-flag
+              (message
+               "Prettier load-config took %.1fms"
+               (* 1000
+                  (float-time (time-subtract (current-time)
+                                             start-time)))))
+            config)
+        (iter-close iter)))))
 
 (defun prettier--default-callback (message process-buffer)
   "Default response callback.

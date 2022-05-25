@@ -563,16 +563,16 @@ parser unless `prettier-infer-parser-flag' is nil.")
   "Used to backup settings so they can be restored later.")
 
 (defvar-local prettier-error-overlay nil
-  "Used to remember the last error overlay")
+  "Used to remember the last error overlay.")
 
 (defvar-local prettier-last-error-marker nil
-  "Used to remember the last error marker")
+  "Used to remember the last error marker.")
 
 (defvar-local prettier-last-parser nil
-  "The last parser used to format the whole file")
+  "The last parser used to format the whole file.")
 
 (defvar-local prettier-version nil
-  "The Prettier version used for this buffer")
+  "The Prettier version used for this buffer.")
 
 ;;;;; Imported Variables
 
@@ -712,7 +712,7 @@ should be used when filing bug reports."
 
 ;;;###autoload
 (define-minor-mode prettier-mode
-  "Runs prettier on file save when this mode is turned on"
+  "Runs prettier on file save when this mode is turned on."
   :lighter prettier-lighter
   (if prettier-mode
       (progn
@@ -1307,7 +1307,7 @@ formatting."
          (point-before (copy-marker (point)))
          (filename (prettier--local-file-name))
          (tempfile (make-nearby-temp-file "prettier-emacs."))
-         result-point
+         (result-point nil)
          any-errors
          timestamps
          (buffer-undo-list-backup buffer-undo-list)

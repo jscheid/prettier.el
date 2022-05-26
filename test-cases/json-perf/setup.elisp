@@ -1,4 +1,14 @@
 (progn
+  ;; disable all minor modes, except for prettier-mode
+  (mapc
+   (lambda (mode-symbol)
+     (when (and (functionp mode-symbol)
+                (not (memq mode-symbol
+                           '(prettier-mode global-prettier-mode))))
+       (ignore-errors
+         (message "Disabling mode %S" mode-symbol)
+         (funcall mode-symbol -1))))
+   minor-mode-list)
   (should (equal (with-current-buffer "*prettier (local)*" (buffer-string)) ""))
   (should (equal major-mode 'json-mode))
   (goto-char 36319)

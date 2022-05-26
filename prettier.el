@@ -1440,7 +1440,9 @@ formatting."
 
           (unless any-errors
             (prettier--clear-errors)
-            (when result-point (goto-char (1+ result-point))))
+            (when result-point
+              (message "Seeking to result-point %S" result-point)
+              (goto-char (1+ result-point))))
 
           (prettier--maybe-show-benchmark start-time
                                           (current-time)

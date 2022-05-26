@@ -31,8 +31,9 @@
   (let ((setup-elisp filename))
     (when (file-exists-p setup-elisp)
       (eval
-       (thing-at-point--read-from-whole-string
-        (f-read-text setup-elisp))))))
+       (save-excursion
+         (thing-at-point--read-from-whole-string
+          (f-read-text setup-elisp)))))))
 
 (defun prettier--run-test-case (directory)
   "Run prettier test in DIRECTORY."

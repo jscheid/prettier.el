@@ -1,4 +1,5 @@
 (progn
+  (should (equal (with-current-buffer "*prettier (local)*" (buffer-string)) ""))
   (should (equal major-mode 'json-mode))
   (goto-char 36319)
   (should (equal (point-min) 1))

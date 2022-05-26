@@ -1,1 +1,9 @@
-(should (equal (point) 28369))
+(let ((error-buffer (get-buffer prettier-error-buffer-name)))
+  (should (or (null error-buffer)
+              (equal (with-current-buffer error-buffer (buffer-string))
+                     "")))
+  (should (equal (point) 28369)))
+
+;; Local Variables:
+;; mode: emacs-lisp
+;; End:

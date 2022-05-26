@@ -5,6 +5,7 @@
                      "")))
   (should (equal (point-min) 1))
   (should (equal (point-max) 28412))
+  (redisplay)
   (should (equal (point) 28369)))
 
 ;; Local Variables:

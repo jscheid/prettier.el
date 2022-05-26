@@ -2,6 +2,8 @@
   (should (or (null error-buffer)
               (equal (with-current-buffer error-buffer (buffer-string))
                      "")))
+  (should (equal (point-min) 1))
+  (should (equal (point-max) 28412))
   (should (equal (point) 28369)))
 
 ;; Local Variables:

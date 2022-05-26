@@ -1,8 +1,9 @@
 (progn
   (should (equal major-mode 'json-mode))
   (goto-char 36319)
+  (should (equal (point-min) 1))
+  (should (equal (point-max) 36374))
   (should (equal (point) 36319)))
-
 
 ;; Local Variables:
 ;; mode: emacs-lisp

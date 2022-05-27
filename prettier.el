@@ -1320,6 +1320,7 @@ Emacs behavior when determining the range of a change."
      (if (> num-inserted 1) (max (1+ beg) end) end)
      (mapc
       (lambda (change)
+        (message "applying change %S: %S" (point) change)
         (let ((kind (car change))
               (arg (cdr change)))
           (cond

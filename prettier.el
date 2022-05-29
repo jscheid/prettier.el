@@ -733,7 +733,7 @@ should be used when filing bug reports."
                   nil
                   'local))
     (remove-hook 'before-save-hook
-                 #'prettier-prettify
+                 #'prettier--maybe-prettify-on-save
                  'local)
     (remove-hook 'after-change-major-mode-hook
                  #'prettier--maybe-sync-config

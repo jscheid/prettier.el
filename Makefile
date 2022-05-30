@@ -43,7 +43,9 @@ build/prettier-el-min.js: prettier-el.js externs.js
 		node_modules/diff-match-patch/index.js \
 		--externs externs.js \
 		--hide_warnings_for=node_modules/diff-match-patch \
-		--dependency_mode=NONE
+		--dependency_mode=NONE \
+		--language_out=ECMASCRIPT5 \
+		--output_wrapper='%output%;m'
 
 dist/bootstrap-min.js: bootstrap.js externs.js
 	node_modules/.bin/google-closure-compiler \
@@ -54,7 +56,8 @@ dist/bootstrap-min.js: bootstrap.js externs.js
 		--js \
 		bootstrap.js \
 		--externs externs.js \
-		--dependency_mode=NONE
+		--dependency_mode=NONE \
+	  --language_out=ECMASCRIPT5
 
 dist/prettier-el.js.gz.base64: build/prettier-el-min.js
 	node -e "const fs = require('fs'); const zopfli = require('node-zopfli-es'); fs.createReadStream('$<').pipe(zopfli.createGzip()).pipe(process.stdout)" \

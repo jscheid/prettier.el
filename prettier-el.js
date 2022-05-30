@@ -379,7 +379,7 @@ function bestParser(prettier, parsers, options, filepath, inferParser) {
   return null;
 }
 
-/** @suppress {uselessCode} */ (baseScript, cacheFilename, inp) => {
+global["m"] = function m(baseScript, cacheFilename, inp) {
   const diff = require("./node_modules/diff-match-patch/index.js");
 
   /**

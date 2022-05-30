@@ -116,7 +116,7 @@ configuration changes, such as when you install a new version of Node,
 Prettier, or any plugins; when you install or uninstall Prettier as a
 local npm package in a directory from which you already have files
 open in Emacs; or when you change Prettier settings that might affect
-any open files.  Doing so will clear all caches and ensure that your
+any open files. Doing so will clear all caches and ensure that your
 changes are picked up.
 
 ### On Remote Servers
@@ -142,6 +142,9 @@ Remote formatting might be improved in the future in the following ways:
 ```
 M-x customize-group prettier
 ```
+
+This is an overview of available options. The docstrings for the individual
+settings may contain additional information.
 
 ### `prettier-mode-sync-config-flag`
 
@@ -198,6 +201,26 @@ this to `nil` and no buffers will be ignored.
 This Sexpr is evaluated as part of the modeline. The default value
 shows the string `Prettier` as well as the Prettier parser and
 Prettier version used for the buffer.
+
+### `prettier-diff-timeout-seconds`
+
+Choose how long the diff operation is allowed to run, which matters for large
+files with many edits resulting from Prettier reformatting. The diff is required
+only for moving point to the correct new location (and adjust region, overlays
+etc.), so essentially this lets you decide how long you are willing to wait for
+this. A setting of 0 disables the timeout and lets the diff always run to
+completion. This used to be fixed at 1 second pre-1.4.0.
+
+See [https://github.com/google/diff-match-patch/wiki/API#diff_maintext1-text2--diffs](diff-match-patch documentation).
+
+### `prettier-diff-edit-cost`
+
+Determines how aggressively individual edits resulting from Prettier
+reformatting get coalesced into larger edits. The default setting should work
+reasonably well. This can be set to 0 to disabled grouping of edits altogether,
+which was the behaviour pre-1.4.0.
+
+See [https://github.com/google/diff-match-patch/wiki/API#diff_cleanupefficiencydiffs--null](diff-match-patch documentation).
 
 ## Differences from `prettier-emacs`
 

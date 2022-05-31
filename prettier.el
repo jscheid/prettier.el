@@ -1437,7 +1437,7 @@ Emacs behavior when determining the range of a change."
            (car arg)
            (cdr arg)))
          ((eq kind ?M) (forward-char arg))
-         ((eq kind ?D) (delete-region (point) (+ (point) arg)))
+         ((eq kind ?D) (delete-char arg))
          ((eq kind ?R)
           (save-restriction
             (narrow-to-region (point) (+ (point) (car arg)))

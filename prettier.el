@@ -1475,6 +1475,7 @@ formatting."
          any-errors
          timestamps
          (buffer-undo-list-backup buffer-undo-list)
+         (deactivate-mark-backup deactivate-mark)
          change-batch
          change-start
          change-end
@@ -1601,7 +1602,8 @@ formatting."
                                           timestamps))
       (iter-close iter)
       (kill-buffer work-buf)
-      (delete-file tempfile))))
+      (delete-file tempfile)
+      (setq deactivate-mark deactivate-mark-backup))))
 
 (defun prettier--node-from-nvm ()
   "Find the best `node' executable with `nvm'.

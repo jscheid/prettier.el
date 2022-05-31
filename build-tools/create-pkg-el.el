@@ -12,12 +12,13 @@
   (with-temp-buffer
     (insert-file-contents "prettier.el")
     (let ((pkg-desc (package-buffer-info)))
-      (let ((version-suffix (getenv "VERSION_SUFFIX")))
-        (when version-suffix
+      (let ((version-suffixes (getenv "VERSION_SUFFIXES")))
+        (when version-suffixes
           (setf (package-desc-version pkg-desc)
                 (append (package-desc-version pkg-desc)
-                        (list (string-to-number
-                               version-suffix))))))
+                        (mapcar #'string-to-number
+                                (split-string version-suffixes
+                                              "\s+"))))))
       (push (cons :keywords
                   (split-string (lm-header "keywords") "[ ,]+"))
             (package-desc-extras pkg-desc))

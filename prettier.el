@@ -67,7 +67,7 @@
   (defmacro prettier--replace-buffer-contents (source &optional max-secs max-costs)
     (if (>= emacs-major-version 27)
         `(replace-buffer-contents ,source ,max-secs ,max-costs)
-      (replace-buffer-contents ,source))))
+      `(replace-buffer-contents ,source))))
 
 
 ;;;; Customization

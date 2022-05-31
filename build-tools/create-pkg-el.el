@@ -18,7 +18,7 @@
                 (append (package-desc-version pkg-desc)
                         (mapcar #'string-to-number
                                 (split-string version-suffixes
-                                              "\s+"))))))
+                                              "\\."))))))
       (push (cons :keywords
                   (split-string (lm-header "keywords") "[ ,]+"))
             (package-desc-extras pkg-desc))

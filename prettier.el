@@ -227,7 +227,7 @@ and use case."
                       (prettier--readme-link
                        "prettier-diff-edit-cost"))))
 ;;;###autoload
-(put 'prettier-diff-timeout-seconds 'safe-local-variable 'natnump)
+(put 'prettier-diff-edit-cost 'safe-local-variable 'natnump)
 
 
 (defcustom prettier-enabled-parsers '(angular

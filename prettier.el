@@ -1774,6 +1774,6 @@ With prefix, ask for the parser to use."
 (provide 'prettier)
 
 ;; LocalWords: editorconfig minibuffer minified nvm parsers stdin npm
-;; LocalWords: node diffing
+;; LocalWords: node diffing boolean
 
 ;;; prettier.el ends here

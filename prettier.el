@@ -1463,7 +1463,8 @@ Emacs behavior when determining the range of a change."
 
 The first supported parser in PARSERS will be used for
 formatting."
-  (let* ((start-time (current-time))
+  (let* ((inhibit-redisplay t)
+         (start-time (current-time))
          (process-buf (process-buffer (prettier--get-process)))
          (start-point (copy-marker (or start (point-min)) nil))
          (end-point (copy-marker (or end (point-max)) t))

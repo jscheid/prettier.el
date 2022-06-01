@@ -7,12 +7,72 @@ The format is based on
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-Note that "unreleased" changes technically do get released, just not
-in a tagged ("stable") version.
-
 ## [Unreleased]
 
-## [0.9.0] - 2020-05-27
+## [1.3.0] - 2022-06-01
+
+## Added
+
+- Add `prettier-prettify-on-save-flag`. (#98)
+- Base Docker environment for testing TRAMP. (#84)
+- Cache config for buffers without file. (#100)
+- New function `prettier-prettify-org-src-code-at-point`
+
+## [1.2.0] - 2022-05-24
+
+## Added
+
+- Test cases for `ruby` and `php` plugins
+- Restart Prettier on load
+
+## Changed
+
+- Improve caching of Prettier options.
+- Use `format`, not `formatWithCursor`.
+- Batch Prettier changes for improved performance.
+
+## Fixed
+
+- Ignore stray stdout and stderr output from Node process.
+- Don't ignore `.prettierignore` (#67)
+- Svelte sub-mode handling (#88)
+- Enable `json5` and `json-stringify` parsers by default
+
+## [1.1.0] - 2021-01-26
+
+## Added
+
+- Support for `prettier-plugin-sh`.
+- `meriyah`, `espree`, and `babel-ts` parsers.
+
+## Changed
+
+- Documentation improvements.
+- Restore buffer settings when leaving mode.
+
+## Fixed
+
+- Don't sync settings when prettier options are null.
+- Add missing dependency on package package. (#58)
+- Add missing `defvar prettier-parser-history`. (#59)
+- Fix byte-compile warnings and bug when using helm.
+- Don't override parser set explicitly. (#57)
+- Fix modeline display for parser override.
+- `cursorOffset` is zero-based, not one-based. (#62)
+- Suppress `console.warn` output. (#64)
+- `lsp-mode` and `mmm-mode` parser detection issues.
+- Prettier detection in yarn workspaces with PnP.
+- Ignore errors in `lsp-buffer-language`. (#49)
+
+## [1.0.0] - 2020-07-04
+
+## Changed
+
+- Documentation improvements.
+- Cleanup and minor refactoring.
+- Release to MELPA.
+
+## [0.9.0] - 2020-06-22
 
 ### Added
 
@@ -167,8 +227,12 @@ in a tagged ("stable") version.
 
 ## [0.1.0] - 2018-10-12
 
-[unreleased]: https://github.com/jscheid/prettier.el/compare/v0.9.0...HEAD
-[0.9.0]: https://github.com/jscheid/prettier.el/compare/v0.8.1...v0.9.0
+[unreleased]: https://github.com/jscheid/prettier.el/compare/release-1.3.0...HEAD
+[1.3.0]: https://github.com/jscheid/prettier.el/compare/release-1.2.0...release-1.3.0
+[1.2.0]: https://github.com/jscheid/prettier.el/compare/release-1.1.0...release-1.2.0
+[1.1.0]: https://github.com/jscheid/prettier.el/compare/release-1.0.0...release-1.1.0
+[1.0.0]: https://github.com/jscheid/prettier.el/compare/release-0.9.0...release-1.0.0
+[0.9.0]: https://github.com/jscheid/prettier.el/compare/v0.8.1...release-0.9.0
 [0.8.1]: https://github.com/jscheid/prettier.el/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/jscheid/prettier.el/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/jscheid/prettier.el/compare/v0.6.3...v0.7.0

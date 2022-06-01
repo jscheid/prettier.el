@@ -752,7 +752,9 @@ should be used when filing bug reports."
 
 ;;;###autoload
 (define-minor-mode prettier-mode
-  "Runs prettier on file save when this mode is turned on."
+  "Sync Prettier settings and format on file save.
+
+For more information see Info node `(prettier)Top'."
   :lighter prettier-lighter
   (if prettier-mode
       (progn

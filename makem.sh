@@ -157,6 +157,10 @@ function elisp-checkdoc-file {
       (kill-emacs 1))))
 
 (setq checkdoc-spellcheck-documentation-flag t)
+
+;; https://github.com/alphapapa/makem.sh/issues/7#issuecomment-1141748201
+(advice-add 'checkdoc-file :before (lambda (_) (ispell-kill-ispell t t)))
+
 (makem-checkdoc-files-and-exit)
 EOF
     echo $file
@@ -704,6 +708,15 @@ function batch {
     run_emacs \
         $(args-load-files "${files_project_feature[@]}" "${files_project_test[@]}") \
         "${args_batch_interactive[@]}"
+}
+
+function benchmark {
+    verbose 1 "Benchmarking..."
+
+    run_emacs \
+        $(args-load-files "${files_project_feature[@]}" "${files_project_test[@]}") \
+        --execute "(prettier-benchmark)"
+    cat $output_file
 }
 
 function interactive {

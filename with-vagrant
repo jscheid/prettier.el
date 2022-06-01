@@ -19,6 +19,7 @@
 # HACKING.md
 
 cd $(dirname "$0")
+export VAGRANT_EXPERIMENTAL="0"
 exec vagrant ssh -- cd /vagrant \&\& "$@"
 
 # Local Variables:

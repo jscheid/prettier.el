@@ -27,7 +27,6 @@ const externalRequire = require;
 const fs = externalRequire("fs");
 const path = externalRequire("path");
 const vm = externalRequire("vm");
-const punycode = externalRequire("punycode");
 const execSync = externalRequire("child_process")["execSync"];
 const nativeModule = externalRequire("module");
 
@@ -343,6 +342,21 @@ function parseParsers(parsersString) {
         );
 }
 
+/**
+ * Add babylon parser if babel parser is present.
+ *
+ * @param {!Array<!string>} parsers The configured parsers.
+ *
+ * @return {!Array<!string>}
+ */
+function compatParsers(parsers) {
+  return parsers.reduce(
+    (accu, parser) =>
+      accu.concat(parser === "babel" ? ["babel", "babylon"] : [parser]),
+    []
+  );
+}
+
 function bestParser(prettier, parsers, options, filepath, inferParser) {
   const fileInfo = filepath
     ? prettier["getFileInfo"].sync(filepath, {
@@ -379,7 +393,7 @@ function bestParser(prettier, parsers, options, filepath, inferParser) {
   return null;
 }
 
-/** @suppress {uselessCode} */ (baseScript, cacheFilename, inp) => {
+global["m"] = function m(baseScript, cacheFilename, inp) {
   const diff = require("./node_modules/diff-match-patch/index.js");
 
   /**
@@ -428,34 +442,53 @@ function bestParser(prettier, parsers, options, filepath, inferParser) {
   }
 
   /**
+   * Parse given JSON or exit indicating protocol error.
+   *
+   * @param {!string} str
+   *
+   * @return object
+   */
+  function tryParseJson(str) {
+    try {
+      return JSON.parse(str);
+    } catch (e) {
+      protocolError();
+    }
+  }
+
+  /**
+   * Count the code points in the given string.  This can be different from the
+   * string length when surrogate pairs are present.  TBD: do we need to
+   * consider combining marks as well here?
+   *
+   * @param {!string} str
+   *
+   * @return !number
+   */
+  function countCodePoints(str) {
+    let result = 0;
+    const len = str.length;
+    for (let i = 0; i < len; i += 1) {
+      const val = str.charCodeAt(i);
+      if (val >= 0xd800 && val <= 0xdbff && i + 1 < len) {
+        i += 1;
+      }
+      result += 1;
+    }
+    return result;
+  }
+
+  /**
    * Handle a request for formatting a file.
    *
    * @param {!Buffer} packet
    */
   function handleFormat(packet) {
-    const editorconfig = packet[1] === "E".charCodeAt(0);
-    const inferParser = packet[2] === "I".charCodeAt(0);
-    const newlineIndex1 = packet.indexOf(10);
-    if (newlineIndex1 < 0) {
-      protocolError();
-    }
-    const filepath = packet.toString("utf-8", 3, newlineIndex1);
-    const newlineIndex2 = packet.indexOf(10, newlineIndex1 + 1);
-    if (newlineIndex2 < 0) {
-      protocolError();
-    }
+    const config = tryParseJson(packet.toString("utf-8", 1));
 
-    const parsersString = packet.toString(
-      "utf-8",
-      newlineIndex1 + 1,
-      newlineIndex2
-    );
-
-    const filename = packet
-      .slice(newlineIndex2 + 1, packet.length - 2)
-      .toString("ascii");
-
-    const body = fs["readFileSync"](filename, "utf8");
+    const body = fs["readFileSync"](config["filename"], "utf8");
+    const filepath = config["filepath"];
+    const inferParser = config["infer-parser"];
 
     try {
       const prettier = getPrettierForPath(filepath);
@@ -466,14 +499,13 @@ function bestParser(prettier, parsers, options, filepath, inferParser) {
       if (path["isAbsolute"](filepath)) {
         options =
           prettier.resolveConfig.sync(filepath, {
-            editorconfig,
+            ["editorconfig"]: config["editorconfig"],
           }) || {};
       }
 
-      const parsers = parseParsers(parsersString);
       const parser = bestParser(
         prettier,
-        parsers,
+        compatParsers(config["parsers"]),
         options,
         filepath,
         inferParser
@@ -504,36 +536,48 @@ function bestParser(prettier, parsers, options, filepath, inferParser) {
       const result = prettier.format(body, options);
 
       const timeAfterFormat = Date.now();
-      const diffResult = new diff().diff_main(body, result);
+
+      const diffInstance = new diff();
+      const diffTimeout = Number(config["diff-timeout-seconds"]);
+      diffInstance.Diff_Timeout = diffTimeout;
+      const beforeDiff = Date.now();
+      const diffResult = diffInstance.diff_main(body, result);
+      const afterDiff = Date.now();
+      out.push(
+        createResponseHeader(
+          "B",
+          Math.max(0, Math.round(diffTimeout * 1000) - (afterDiff - beforeDiff))
+        )
+      );
+
+      const diffEditCost = config["diff-edit-cost"];
+
+      if (diffEditCost > 0) {
+        diffInstance.Diff_EditCost = diffEditCost;
+        diffInstance.diff_cleanupEfficiency(diffResult);
+      }
 
       for (let index = 0; index < diffResult.length; index++) {
-        const [kind, str] = diffResult[index];
-        switch (kind) {
+        const result = diffResult[index];
+        const str = result[1];
+
+        switch (result[0]) {
           case 1:
-            {
-              if (str.length > 0) {
-                const strBuf = createBase64Buffer(str);
-                out.push(
-                  createResponseHeader("I", strBuf.length),
-                  strBuf,
-                  newline
-                );
-              }
+            if (str.length > 0) {
+              const strBuf = createBase64Buffer(str);
+              out.push(
+                createResponseHeader("I", strBuf.length),
+                strBuf,
+                newline
+              );
             }
             break;
           case -1:
-            out.push(
-              createResponseHeader("D", punycode["ucs2"]["decode"](str).length)
-            );
+            out.push(createResponseHeader("D", countCodePoints(str)));
             break;
           case 0:
             if (index < diffResult.length - 1) {
-              out.push(
-                createResponseHeader(
-                  "M",
-                  punycode["ucs2"]["decode"](str).length
-                )
-              );
+              out.push(createResponseHeader("M", countCodePoints(str)));
             }
         }
       }

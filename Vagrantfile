@@ -24,14 +24,15 @@ Vagrant.configure('2') do |config|
     set -eou pipefail
     add-apt-repository ppa:kelleyk/emacs
     apt-get update
-    curl --location --silent https://deb.nodesource.com/setup_10.x | sudo -E bash -
-    apt-get install -y aspell python3 python3-setuptools texinfo python3-pip emacs26 nodejs
+    curl --location --silent https://deb.nodesource.com/setup_16.x | sudo -E bash -
+    apt-get install -y aspell python3 python3-setuptools texinfo python3-pip emacs27 nodejs gnutls-bin ruby
     curl --location --remote-name --silent \
       https://github.com/jgm/pandoc/releases/download/2.11.1.1/pandoc-2.11.1.1-1-amd64.deb
     dpkg --install pandoc-2.11.1.1-1-amd64.deb
     pip3 install panflute>=2.0.5
+    npm install -g npm@8.11.0
     cd /vagrant
-    npm install
+    npm ci
   SHELL
 end
 

@@ -61,7 +61,13 @@
   (defmacro prettier--combine-change-calls (beg end &rest body)
     (if (fboundp 'combine-change-calls)
         `(combine-change-calls ,beg ,end ,@body)
-      `(when (>= ,end ,beg) (combine-after-change-calls ,@body)))))
+      `(when (>= ,end ,beg) (combine-after-change-calls ,@body))))
+
+  ;; Fallback for Emacs < 27
+  (defmacro prettier--replace-buffer-contents (source &optional max-secs max-costs)
+    (if (>= emacs-major-version 27)
+        `(replace-buffer-contents ,source ,max-secs ,max-costs)
+      `(replace-buffer-contents ,source))))
 
 
 ;;;; Customization
@@ -158,6 +164,71 @@ Requires Prettier 1.9+."
                        "prettier-prettify-on-save-flag"))))
 ;;;###autoload
 (put 'prettier-prettify-on-save-flag 'safe-local-variable 'booleanp)
+
+(defcustom prettier-diff-timeout-seconds 1.0
+  "How many seconds the diff exploration phase may take in total.
+
+This is the budget available for all diff operations during a
+formatting run.  It is shared between diffing in the Node process
+and any `replace-buffer-contents' invocations resulting from the
+edits.
+
+You can set this to zero to disable timeouts altogether, in which
+case all diff operations will always run to completion.
+
+This is essentially an upper bound on the duration of the diff
+operation, which is the biggest part of the overhead added by
+this package on top of formatting itself.  If the diff operation
+is stopped early, the buffer will still be formatted correctly
+but point (and region, overlays, etc.) might not be adjusted
+correctly.
+
+This setting shouldn't matter much for small files, or for large
+files with only few individual edits resulting from Prettier
+formatting, but it does matter for large files with many
+edits (such as large foreign files never before formatted with
+Prettier, or formatted with different settings) as these tend to
+cause quite a lot of work for the diffing operation.
+
+You may want to increase this setting (or disable it by setting
+it to zero) if you care about point, region, etc.  being moved to
+the correct location in all cases, and don't mind waiting a bit
+longer for larger files.  On the other hand, if you're impatient
+or if you don't care that point might be off in some cases, you
+may want to decrease it."
+  :type 'number
+  :package-version '(prettier . "1.4.0")
+  :group 'prettier
+  :link '(info-link "(prettier)prettier-diff-timeout-seconds")
+  :link `(url-link ,(eval-when-compile
+                      (prettier--readme-link
+                       "prettier-diff-timeout-seconds"))))
+;;;###autoload
+(put 'prettier-diff-timeout-seconds 'safe-local-variable 'numberp)
+
+(defcustom prettier-diff-edit-cost 100
+  "The edit cost for diff cleanup, or 0 to disable cleanup.
+
+This setting dictates how aggressively the individual edits
+resulting from a formatting operation get coalesced into more
+coarsely grained edits.  Benchmarks indicate that moderate
+coalescence performs best compared to aggressive and conservative
+settings.
+
+The default setting should serve well, but you should feel free
+to use the benchmarks included with this package, or run your
+own, to see if you can tweak it to a value ideal for your system
+and use case."
+  :type 'natnum
+  :package-version '(prettier . "1.4.0")
+  :group 'prettier
+  :link '(info-link "(prettier)prettier-diff-edit-cost")
+  :link `(url-link ,(eval-when-compile
+                      (prettier--readme-link
+                       "prettier-diff-edit-cost"))))
+;;;###autoload
+(put 'prettier-diff-edit-cost 'safe-local-variable 'natnump)
+
 
 (defcustom prettier-enabled-parsers '(angular
                                       babel
@@ -993,21 +1064,21 @@ separate window."
       (setq-local compilation-error-screen-columns nil)
       (display-buffer errbuf))))
 
-(defun prettier--show-remote-error (filename error-msg)
-  "Show the remote ERROR-MSG for FILENAME as appropriate."
+(defun prettier--show-remote-error (filename error-message)
+  "Show the remote ERROR-MESSAGE for FILENAME as appropriate."
   (cond
    ((seq-some
      (lambda (prefix)
-       (string-prefix-p prefix error-msg))
+       (string-prefix-p prefix error-message))
      prettier-benign-errors)
-    (prettier--delayed-message "%s" error-msg))
+    (prettier--delayed-message "%s" error-message))
    ((and prettier-inline-errors-flag
          (string-match
           (concat "^" prettier-error-regex "$")
-          error-msg))
-    (let ((row (string-to-number (match-string 2 error-msg)))
-          (column (string-to-number (match-string 3 error-msg)))
-          (first-line (match-string 1 error-msg)))
+          error-message))
+    (let ((row (string-to-number (match-string 2 error-message)))
+          (column (string-to-number (match-string 3 error-message)))
+          (first-line (match-string 1 error-message)))
       (when prettier-error-overlay
         (delete-overlay prettier-error-overlay))
       (save-excursion
@@ -1028,7 +1099,7 @@ separate window."
           (overlay-put ov 'after-string str)
           (setq prettier-error-overlay ov)))))
    (t
-    (prettier--show-error "%s: %s" filename error-msg))))
+    (prettier--show-error "%s: %s" filename error-message))))
 
 (defun prettier--clear-errors ()
   "Kill any error buffers and remove any overlays."
@@ -1126,7 +1197,7 @@ post-formatting as possible."
                             (or p (setq p (re-search-forward
                                            "#prettier\.el-sync#\n" nil t)))
                             (looking-at
-                             "\\([DEIMOPTVZ]\\)\\([[:xdigit:]]+\\)\n")
+                             "\\([DEIMOPTBVZ]\\)\\([[:xdigit:]]+\\)\n")
                             (let* ((m (match-end 0))
                                    (kind (string-to-char
                                           (match-string 1)))
@@ -1139,9 +1210,11 @@ post-formatting as possible."
                                 (throw 'end-of-message nil))
                                ((member kind '(?I ?O ?E ?V ?P))
                                 (when (<= (+ m len) (point-max))
-                                  (iter-yield
-                                   (cons kind (list m (+ m len))))
-                                  (setq p (+ m len 1))))
+                                  (let ((decoded-len (base64-decode-region
+                                                      m (+ m len))))
+                                    (iter-yield
+                                     (cons kind (list m (+ m decoded-len))))
+                                    (setq p (+ m decoded-len 1)))))
                                (t (setq p m)
                                   (iter-yield (cons kind len))
                                   t))))))
@@ -1219,11 +1292,10 @@ the parsers."
                     (setq
                      config
                      (json-read-from-string
-                      (base64-decode-string
-                       (with-current-buffer process-buf
-                         (buffer-substring-no-properties
-                          (nth 1 command)
-                          (nth 2 command)))))))))
+                      (with-current-buffer process-buf
+                        (buffer-substring-no-properties
+                         (nth 1 command)
+                         (nth 2 command))))))))
             (when prettier-show-benchmark-flag
               (message
                "Prettier load-config took %.1fms"
@@ -1251,7 +1323,6 @@ PROCESS-BUFFER is the process buffer."
                      (buffer-substring-no-properties
                       (nth 0 (cdr command))
                       (nth 1 (cdr command)))))
-           (base64-decode-region 1 (point))
            (buffer-string))))))))
 
 (defun prettier--maybe-show-benchmark (start-time end-time timestamps)
@@ -1268,6 +1339,10 @@ TIMESTAMPS is additional information received from the server."
        (* prettier 1000)
        (* (- total prettier) 1000)))))
 
+(defun prettier--json-bool (value)
+  "Convert VALUE to a JSON boolean."
+  (if value t :json-false))
+
 (defun prettier--format-iter (parsers
                               filename
                               tempfile)
@@ -1280,15 +1355,17 @@ formatting are stored."
    (prettier--get-process)
    (list
     "f"
-    (if prettier-editorconfig-flag "E" "e")
-    (if prettier-infer-parser-flag "I" "i")
-    filename
-    "\n" (if parsers
-             (string-join
-              (mapcar #'symbol-name parsers)
-              ",")
-           "-")
-    "\n" (prettier--pick-localname tempfile)
+    (json-encode
+     `((editorconfig
+        . ,(prettier--json-bool prettier-editorconfig-flag))
+       (infer-parser
+        . ,(prettier--json-bool prettier-infer-parser-flag))
+       (filepath . ,filename)
+       (parsers . ,(vconcat parsers))
+       (filename . ,(prettier--pick-localname tempfile))
+       (point . (1- (point)))
+       (diff-timeout-seconds . ,prettier-diff-timeout-seconds)
+       (diff-edit-cost . ,prettier-diff-edit-cost)))
     "\n\n")))
 
 (defun prettier--payload (process-buffer command)
@@ -1297,13 +1374,44 @@ formatting are stored."
 PROCESS-BUFFER is the process buffer in which the command was
 received."
   (let ((range (cdr command)))
-    (base64-decode-string
+    (decode-coding-string
      (with-current-buffer process-buffer
        (buffer-substring-no-properties (nth 0 range)
-                                       (nth 1 range))))))
+                                       (nth 1 range)))
+     'utf-8)))
 
-(defun prettier--apply-change-batch (batch beg end num-inserted)
-  "Apply each change in BATCH.
+(defun prettier--optimize-change-batch (batch)
+  "Optimize the BATCH by merging insert+delete operations.
+
+Replace insert+delete or delete+insert combinations with a
+replacement operation.  Also, reverse the order of operations."
+  (when batch
+    (cl-reduce
+     (lambda (accu op)
+       (cond
+        ((and (eq (caar accu) ?I)
+              (eq (car op) ?D))
+         (setcar accu (cons ?R (cons (cdr op) (cdar accu)))))
+        ((and (eq (car op) ?I)
+              (eq (caar accu) ?D))
+         (setcar accu (cons ?R (cons (cdar accu) (cdr op)))))
+        (t
+         (push op accu)))
+       accu)
+     batch
+     :initial-value nil)))
+
+(defun prettier--apply-change-batch (source-buffer
+                                     diff-budget-seconds-cons
+                                     batch
+                                     beg
+                                     end
+                                     num-inserted)
+  "Apply each change in BATCH, sourcing text from SOURCE-BUFFER.
+
+DIFF-BUDGET-SECONDS-CONS is a cons cell whose car is the
+remaining time budget available for diff operations.  It get
+updated by this function as it is depleted.
 
 The batch is a reversed list of changes, where each change is a
 cons cell whose car is ?I for insert, ?M for move, or ?D for
@@ -1314,19 +1422,38 @@ BEG and END are the bounds of the change for use with
 `combine-change-calls'.  NUM-INSERTED is the total number
 of characters inserted, which is used to adjust END to match
 Emacs behavior when determining the range of a change."
-  (when batch
-    (prettier--combine-change-calls
-     beg
-     (if (> num-inserted 1) (max (1+ beg) end) end)
-     (mapc
-      (lambda (change)
-        (let ((kind (car change))
-              (arg (cdr change)))
-          (cond
-           ((eq kind ?I) (insert arg))
-           ((eq kind ?M) (forward-char arg))
-           ((eq kind ?D) (delete-region (point) (+ (point) arg))))))
-      (nreverse batch)))))
+  (prettier--combine-change-calls
+   beg
+   (if (> num-inserted 1) (max (1+ beg) end) end)
+   (mapc
+    (lambda (change)
+      (let ((kind (car change))
+            (arg (cdr change)))
+        (cond
+         ((eq kind ?I)
+          (with-current-buffer source-buffer (widen))
+          (insert-buffer-substring-no-properties
+           source-buffer
+           (car arg)
+           (cdr arg)))
+         ((eq kind ?M) (forward-char arg))
+         ((eq kind ?D) (delete-char arg))
+         ((eq kind ?R)
+          (save-restriction
+            (narrow-to-region (point) (+ (point) (car arg)))
+            (with-current-buffer source-buffer
+              (narrow-to-region (cadr arg) (cddr arg)))
+            (let ((before-replace (current-time)))
+              (prettier--replace-buffer-contents
+               source-buffer
+               (unless (zerop prettier-diff-timeout-seconds)
+                 (car diff-budget-seconds-cons)))
+              (setcar diff-budget-seconds-cons
+                      (max 0.0 (- (car diff-budget-seconds-cons)
+                                  (float-time
+                                   (time-since before-replace))))))
+            (goto-char (point-max)))))))
+    (prettier--optimize-change-batch batch))))
 
 (defun prettier--prettify (&optional
                            parsers
@@ -1336,34 +1463,45 @@ Emacs behavior when determining the range of a change."
 
 The first supported parser in PARSERS will be used for
 formatting."
-  (let* ((start-time (current-time))
+  (let* ((inhibit-redisplay t)
+         (start-time (current-time))
          (process-buf (process-buffer (prettier--get-process)))
          (start-point (copy-marker (or start (point-min)) nil))
          (end-point (copy-marker (or end (point-max)) t))
          (point-before (copy-marker (point)))
          (filename (prettier--local-file-name))
          (tempfile (make-nearby-temp-file "prettier-emacs."))
-         (result-point nil)
+         (work-buf (generate-new-buffer " prettier-work"))
+         (work-point 1)
          any-errors
          timestamps
          (buffer-undo-list-backup buffer-undo-list)
+         (deactivate-mark-backup deactivate-mark)
          change-batch
          change-start
          change-end
          (change-num-inserted 0)
          (num-batches 0)
+         (diff-budget-seconds-cons (cons 0 nil))
          (apply-batch
           (lambda ()
             (when change-batch
-              (cl-incf num-batches))
-            (prettier--apply-change-batch
-             change-batch
-             change-start
-             change-end
-             change-num-inserted)))
+              (cl-incf num-batches)
+              (prettier--apply-change-batch
+               work-buf
+               diff-budget-seconds-cons
+               change-batch
+               change-start
+               change-end
+               change-num-inserted))))
          (iter (prettier--format-iter parsers
                                       filename
                                       tempfile)))
+    (with-current-buffer work-buf
+      (setq-local kill-buffer-hook nil)
+      (setq-local inhibit-modification-hooks t)
+      (setq buffer-undo-list t))
+
     (unwind-protect
         (when (< start-point end-point)
           (let ((write-region-inhibit-fsync t)
@@ -1391,17 +1529,32 @@ formatting."
                               (funcall apply-batch)
                               (setq change-batch nil
                                     change-num-inserted 0)
+                              (with-current-buffer work-buf
+                                (erase-buffer)
+                                (setq work-point (point-max)))
                               (forward-char distance))
                           (push command change-batch)
                           (cl-incf change-end distance))))
 
                      ((eq kind ?I)
-                      (let ((payload (funcall command-str)))
+                      (let ((work-range
+                             (with-current-buffer process-buf
+                               (cons
+                                work-point
+                                (+ work-point (decode-coding-region
+                                               (cadr command)
+                                               (caddr command)
+                                               'utf-8
+                                               work-buf))))))
+                        (with-current-buffer work-buf
+                          (goto-char (setq work-point (cdr work-range))))
+
                         (unless change-batch
                           (setq change-start (point)
                                 change-end change-start))
-                        (push (cons ?I payload) change-batch)
-                        (cl-incf change-num-inserted (length payload))))
+                        (push (cons ?I work-range) change-batch)
+                        (cl-incf change-num-inserted
+                                 (- (cdr work-range) (car work-range)))))
 
                      ((eq kind ?D)
                       (unless change-batch
@@ -1412,6 +1565,10 @@ formatting."
 
                      ((eq kind ?T)
                       (push (/ (cdr command) 1000.0) timestamps))
+
+                     ((eq kind ?B)
+                      (setcar diff-budget-seconds-cons
+                              (/ (cdr command) 1000.0)))
 
                      ((eq kind ?E)
                       (setq any-errors t)
@@ -1439,14 +1596,15 @@ formatting."
              (signal (car err) (cdr err))))
 
           (unless any-errors
-            (prettier--clear-errors)
-            (when result-point (goto-char (1+ result-point))))
+            (prettier--clear-errors))
 
           (prettier--maybe-show-benchmark start-time
                                           (current-time)
                                           timestamps))
       (iter-close iter)
-      (delete-file tempfile))))
+      (kill-buffer work-buf)
+      (delete-file tempfile)
+      (setq deactivate-mark deactivate-mark-backup))))
 
 (defun prettier--node-from-nvm ()
   "Find the best `node' executable with `nvm'.
@@ -1619,5 +1777,6 @@ With prefix, ask for the parser to use."
 (provide 'prettier)
 
 ;; LocalWords: editorconfig minibuffer minified nvm parsers stdin npm
+;; LocalWords: node diffing boolean
 
 ;;; prettier.el ends here

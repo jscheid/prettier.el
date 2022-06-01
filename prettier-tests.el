@@ -174,6 +174,21 @@ Header
 
 Footer"))))
 
+(ert-deftest sync-test ()
+  "Test syncing settings from Prettier."
+  (with-temp-buffer
+    (js-mode)
+    (setq buffer-file-name (concat prettier-el-home "test.js"))
+
+    (setq js-indent-level 10)
+    (prettier-mode)
+    (should (equal js-indent-level 2))
+    (should (local-variable-p 'js-indent-first-init))
+    (should (null js-indent-first-init))
+    (prettier-mode -1)
+    (should (equal js-indent-level 10))
+    (should (not (local-variable-p 'js-indent-first-init)))))
+
 (provide 'prettier-tests)
 
 ;;; prettier-tests.el ends here

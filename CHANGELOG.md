@@ -18,6 +18,8 @@ and this project adheres to
 
 - Optimize edits
 - Upgrade dependencies
+- Use `editorconfig` package for syncing `tabWidth`, `useTabs` and `printWidth`
+  settings
 
 ## Fixed
 

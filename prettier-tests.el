@@ -22,10 +22,6 @@
 (eval-when-compile
   (require 'ert-async))
 
-(setq prettier-el-home (concat
-                        (file-name-directory load-file-name)
-                        "dist/"))
-
 (defun prettier--eval-file-if-exists (filename)
   "Read and eval file FILENAME if it exists."
   (let ((setup-elisp filename))

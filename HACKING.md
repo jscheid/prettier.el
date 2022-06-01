@@ -11,17 +11,6 @@ If you would rather not use Vagrant, you can derive instructions for how to set
 up your local build environment from `Vagrantfile`; if you do so, please
 consider sending a PR with instructions.
 
-## Base directory
-
-Ensure that variable `prettier-el-home` is set to the source directory or
-`prettier.el` might pick up the wrong version of the JavaScript files. One way
-to do so is the following:
-
-```elisp
-(defvar prettier-el-home "/path/to/this/directory/dist/")
-(use-package prettier :load-path prettier-el-home)
-```
-
 ## Building
 
 Initially, and after changes to JS code, you will need to build by running

@@ -842,6 +842,17 @@ should be used when filing bug reports."
 
 ;;;; Support
 
+(defun prettier--read-aux-file (file-name)
+  "Read supplemental file named FILE-NAME, return as string."
+  (with-temp-buffer
+    (insert-file-contents-literally
+     (or
+      (cl-find-if #'file-exists-p
+                  (list (concat prettier-el-home file-name)
+                        (concat prettier-el-home "dist/" file-name)))
+      (error "Cannot find supplemental file %S" file-name)))
+    (buffer-string)))
+
 (defun prettier--in-node-modules-p ()
   "Return t if current buffer's file is beneath `node_modules'."
   (and buffer-file-name
@@ -929,11 +940,7 @@ Additional considerations were:
                        (or (prettier--buffer-remote-p 'host)
                            "(local)"))))
          (payload
-          (with-temp-buffer
-            (insert-file-contents-literally
-             (concat prettier-el-home
-                     "prettier-el.js.gz.base64"))
-            (buffer-string)))
+          (prettier--read-aux-file "prettier-el.js.gz.base64"))
          (new-process
           (progn
             (with-current-buffer buf
@@ -944,10 +951,7 @@ Additional considerations were:
              buf
              (prettier--pick-localname node-command)
              "--eval"
-             (with-temp-buffer
-               (insert-file-contents-literally
-                (concat prettier-el-home "bootstrap-min.js"))
-               (buffer-string))
+             (prettier--read-aux-file "bootstrap-min.js")
              (number-to-string (length payload))))))
     (set-process-query-on-exit-flag new-process nil)
     (set-process-sentinel

@@ -37,7 +37,7 @@
 (defun prettier--run-test-case (directory)
   "Run prettier test in DIRECTORY."
   (let ((default-directory directory))
-    (shell-command "npm ci")
+    (shell-command "yarn")
     (mapc
      (lambda (original-file)
        (let ((actual

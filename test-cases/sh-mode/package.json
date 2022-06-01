@@ -1,6 +1,8 @@
 {
+  "name": "sh-mode",
+  "version": "0.0.0",
+  "private": true,
   "devDependencies": {
-    "prettier": "^2.1.2",
-    "prettier-plugin-sh": "^0.6.0"
+    "prettier-plugin-sh": "^0.11.0"
   }
 }

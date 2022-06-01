@@ -1,5 +1,5 @@
 {
-  "devDependencies": {
-    "prettier": "^2.0.5"
-  }
+  "name": "prettierignore",
+  "version": "0.0.0",
+  "private": true
 }

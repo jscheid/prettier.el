@@ -202,6 +202,9 @@ File: prettier.info,  Node: Customization,  Next: Differences from prettier-emac
 
 M-x customize-group prettier
 
+This is an overview of available options.  The docstrings for the
+individual settings may contain additional information.
+
 * Menu:
 
 * prettier-mode-sync-config-flag::
@@ -213,6 +216,8 @@ M-x customize-group prettier
 * prettier-pre-warm::
 * prettier-mode-ignore-buffer-function::
 * prettier-mode-lighter::
+* prettier-diff-timeout-seconds::
+* prettier-diff-edit-cost::
 
 
 File: prettier.info,  Node: prettier-mode-sync-config-flag,  Next: prettier-editorconfig-flag,  Up: Customization
@@ -297,7 +302,7 @@ beneath a ‘node_modules’ directory.  You can set this to ‘nil’ and no
 buffers will be ignored.
 
 
-File: prettier.info,  Node: prettier-mode-lighter,  Prev: prettier-mode-ignore-buffer-function,  Up: Customization
+File: prettier.info,  Node: prettier-mode-lighter,  Next: prettier-diff-timeout-seconds,  Prev: prettier-mode-ignore-buffer-function,  Up: Customization
 
 4.9 ‘prettier-mode-lighter’
 ===========================
@@ -305,6 +310,39 @@ File: prettier.info,  Node: prettier-mode-lighter,  Prev: prettier-mode-ignore-b
 This Sexpr is evaluated as part of the modeline.  The default value
 shows the string ‘Prettier’ as well as the Prettier parser and Prettier
 version used for the buffer.
+
+
+File: prettier.info,  Node: prettier-diff-timeout-seconds,  Next: prettier-diff-edit-cost,  Prev: prettier-mode-lighter,  Up: Customization
+
+4.10 ‘prettier-diff-timeout-seconds’
+====================================
+
+Choose how long the diff operation is allowed to run, which matters for
+large files with many edits resulting from Prettier reformatting.  The
+diff is required only for moving point to the correct new location (and
+adjust region, overlays etc.), so essentially this lets you decide how
+long you are willing to wait for this.  A setting of 0 disables the
+timeout and lets the diff always run to completion.  This used to be
+fixed at 1 second pre-1.4.0.
+
+See
+https://github.com/google/diff-match-patch/wiki/API#diff_maintext1-text2–diffs
+(diff-match-patch%20documentation).
+
+
+File: prettier.info,  Node: prettier-diff-edit-cost,  Prev: prettier-diff-timeout-seconds,  Up: Customization
+
+4.11 ‘prettier-diff-edit-cost’
+==============================
+
+Determines how aggressively individual edits resulting from Prettier
+reformatting get coalesced into larger edits.  The default setting
+should work reasonably well.  This can be set to 0 to disabled grouping
+of edits altogether, which was the behaviour pre-1.4.0.
+
+See
+https://github.com/google/diff-match-patch/wiki/API#diff_cleanupefficiencydiffs–null
+(diff-match-patch%20documentation).
 
 
 File: prettier.info,  Node: Differences from prettier-emacs,  Next: Credits,  Prev: Customization,  Up: Top
@@ -388,32 +426,36 @@ Node: On Remote Servers6111
 Ref: #on-remote-servers6257
 Node: Customization7091
 Ref: #customization7233
-Node: prettier-mode-sync-config-flag7555
-Ref: #prettier-mode-sync-config-flag7751
-Node: prettier-editorconfig-flag7878
-Ref: #prettier-editorconfig-flag8099
-Node: prettier-enabled-parsers8201
-Ref: #prettier-enabled-parsers8414
-Node: prettier-infer-parser-flag8478
-Ref: #prettier-infer-parser-flag8699
-Node: prettier-prettify-on-save-flag8832
-Ref: #prettier-prettify-on-save-flag9064
-Node: prettier-inline-errors-flag9274
-Ref: #prettier-inline-errors-flag9491
-Node: prettier-pre-warm9704
-Ref: #prettier-pre-warm9907
-Node: prettier-mode-ignore-buffer-function10242
-Ref: #prettier-mode-ignore-buffer-function10477
-Node: prettier-mode-lighter10805
-Ref: #prettier-mode-lighter10984
-Node: Differences from prettier-emacs11158
-Ref: #differences-from-prettier-emacs11346
-Node: Credits12757
-Ref: #credits12896
-Node: Building from source13013
-Ref: #building-from-source13154
-Node: License13265
-Ref: #license13364
+Node: prettier-mode-sync-config-flag7740
+Ref: #prettier-mode-sync-config-flag7936
+Node: prettier-editorconfig-flag8063
+Ref: #prettier-editorconfig-flag8284
+Node: prettier-enabled-parsers8386
+Ref: #prettier-enabled-parsers8599
+Node: prettier-infer-parser-flag8663
+Ref: #prettier-infer-parser-flag8884
+Node: prettier-prettify-on-save-flag9017
+Ref: #prettier-prettify-on-save-flag9249
+Node: prettier-inline-errors-flag9459
+Ref: #prettier-inline-errors-flag9676
+Node: prettier-pre-warm9889
+Ref: #prettier-pre-warm10092
+Node: prettier-mode-ignore-buffer-function10427
+Ref: #prettier-mode-ignore-buffer-function10662
+Node: prettier-mode-lighter10990
+Ref: #prettier-mode-lighter11207
+Node: prettier-diff-timeout-seconds11381
+Ref: #prettier-diff-timeout-seconds11603
+Node: prettier-diff-edit-cost12178
+Ref: #prettier-diff-edit-cost12358
+Node: Differences from prettier-emacs12751
+Ref: #differences-from-prettier-emacs12939
+Node: Credits14350
+Ref: #credits14489
+Node: Building from source14606
+Ref: #building-from-source14747
+Node: License14858
+Ref: #license14957
 
 End Tag Table
 

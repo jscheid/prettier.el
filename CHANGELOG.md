@@ -9,6 +9,20 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- `prettier-diff-timeout-seconds` customization option
+- `prettier-diff-edit-cost` customization option
+
+## Changed
+
+- Optimize edits
+- Upgrade dependencies
+
+## Fixed
+
+- Don't deactivate region on format
+
 ## [1.3.0] - 2022-06-01
 
 ## Added

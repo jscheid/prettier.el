@@ -57,6 +57,11 @@
                   ".prettier."
                   original-file))
                 (buffer-string))))
+         (should (equal (with-current-buffer "*prettier (local)*" (buffer-string)) ""))
+         (let ((error-buffer (get-buffer prettier-error-buffer-name)))
+           (should (or (null error-buffer)
+                       (equal (with-current-buffer error-buffer (buffer-string))
+                              ""))))
          (should (equal actual expected))
          (prettier--eval-file-if-exists "teardown.elisp")))
      (directory-files directory t "\\.original\\."))))

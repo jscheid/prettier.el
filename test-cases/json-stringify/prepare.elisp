@@ -1,7 +1,0 @@
-(progn
-  (setq buffer-file-name (concat (file-name-directory buffer-file-name) "package.json"))
-  (json-mode))
-
-;; Local Variables:
-;; mode: emacs-lisp
-;; End:

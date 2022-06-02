@@ -24,6 +24,7 @@ and this project adheres to
 ## Fixed
 
 - Don't deactivate region on format
+- Handle Prettier endOfLine setting
 
 ## [1.3.0] - 2022-06-01
 

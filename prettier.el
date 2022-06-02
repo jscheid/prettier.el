@@ -1163,6 +1163,17 @@ post-formatting as possible."
 
      prettier-previous-local-settings
      (when options
+       (let ((end-of-line (plist-get options :endOfLine)))
+         (set-buffer-file-coding-system
+          (merge-coding-systems
+           (cond
+            ((equal end-of-line "lf") 'undecided-unix)
+            ((equal end-of-line "cr") 'undecided-mac)
+            ((equal end-of-line "crlf") 'undecided-dos)
+            (t 'undecided))
+           buffer-file-coding-system)
+          t
+          t))
        (prettier--backup-buffer-local-values
         (lambda ()
           (editorconfig-set-indentation
@@ -1561,7 +1572,7 @@ formatting."
                                 (+ work-point (decode-coding-region
                                                (cadr command)
                                                (caddr command)
-                                               'utf-8
+                                               'utf-8-unix
                                                work-buf))))))
                         (with-current-buffer work-buf
                           (goto-char (setq work-point (cdr work-range))))

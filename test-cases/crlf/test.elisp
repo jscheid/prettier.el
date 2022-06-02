@@ -1,0 +1,1 @@
+(should (string-match "-dos$" (symbol-name buffer-file-coding-system)))

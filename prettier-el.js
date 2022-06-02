@@ -532,6 +532,7 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
       options["rangeStart"] = undefined;
       options["rangeEnd"] = undefined;
       options["parser"] = parser;
+      options["endOfLine"] = "lf";
 
       const result = prettier.format(body, options);
 

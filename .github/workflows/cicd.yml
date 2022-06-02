@@ -104,13 +104,14 @@ jobs:
           version=$(awk 'END {gsub(/"/, "", $3); print $3}' < dist/prettier-pkg.el)
           tar cf prettier.tar --transform="s,^dist/,prettier-${version}/," dist/*
           ls -ld prettier.tar
+          echo "snapshot_version=${version}.${{ github.run_number }}snapshot" >> $GITHUB_ENV
 
       - name: Upload build
         if: matrix.emacs_version == '26.3'
         uses: actions/upload-artifact@v2
         with:
           path: prettier.tar
-          name: prettier.tar
+          name: "prettier-${{ env.snapshot_version }}.tar"
 
   deploy:
     needs: build
@@ -120,7 +121,8 @@ jobs:
       - name: Download build
         uses: actions/download-artifact@v2
         with:
-          name: prettier.tar
+          name: "prettier-${{ env.snapshot_version }}.tar"
+          path: prettier.tar
 
       - name: Unpack tarball
         run: |

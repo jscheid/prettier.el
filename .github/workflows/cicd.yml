@@ -47,7 +47,7 @@ jobs:
           - 28.1
           - snapshot
     outputs:
-      tarball_name: "${{ steps.build.outputs.tarball_name }}"
+      tarball_name: "${{ steps.build.outputs.tarball_name_26.3 }}"
     steps:
       - uses: purcell/setup-emacs@master
         with:
@@ -109,14 +109,14 @@ jobs:
           tarball_name="prettier-${version}.tar"
           tar cf "${tarball_name}"  --transform="s,^dist/,prettier-${version}/," dist/*
           ls -ld "${tarball_name}"
-          echo "::set-output name=tarball_name::${tarball_name}"
+          echo "::set-output name=tarball_name_${{ matrix.emacs_version }}::${tarball_name}"
 
       - name: Upload build
         if: matrix.emacs_version == '26.3'
         uses: actions/upload-artifact@v2
         with:
-          path: "${{ steps.build.outputs.tarball_name }}"
-          name: "${{ steps.build.outputs.tarball_name }}"
+          path: "${{ steps.build.outputs.tarball_name_26.3 }}"
+          name: "${{ steps.build.outputs.tarball_name_26.3 }}"
 
   deploy:
     needs: build

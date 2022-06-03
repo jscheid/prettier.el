@@ -7,7 +7,7 @@
 ;; Created: 7 Nov 2018
 ;; Keywords: convenience, languages, files
 ;; Homepage: https://github.com/jscheid/prettier.el
-;; Package-Requires: ((emacs "26.1") (iter2 "0.9") (nvm "0.2"))
+;; Package-Requires: ((emacs "26.1") (iter2 "0.9") (nvm "0.2") (editorconfig "0.8"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -47,6 +47,7 @@
 (require 'compile)
 (require 'ansi-color)
 (require 'package)
+(require 'editorconfig)
 
 (eval-when-compile
   (require 'cl-lib)
@@ -369,43 +370,8 @@ Set this variable to nil to disable the mode line completely."
 Other errors are shown inline or in the error buffer.")
 
 (defconst prettier-sync-settings
-  '(((fill-column                   ; built-in
-      js3-max-columns)              ; js3-mode
+  '(((js3-max-columns)              ; js3-mode
      :printWidth)
-
-    ((enh-ruby-indent-tabs-mode     ; enh-ruby-mode
-      indent-tabs-mode              ; built-in
-      js3-indent-tabs-mode          ; js3-mode
-      ruby-indent-tabs-mode)        ; ruby-mode
-     :useTabs)
-
-    ((c-basic-offset                ; cc-mode, java-mode
-      css-indent-offset             ; css-mode, scss-mode etc
-      elm-indent-offset             ; elm-mode
-      enh-ruby-indent-level         ; enh-ruby-mode
-      graphql-indent-level          ; graphql-mode
-      handlebars-basic-offset       ; handlebars-mode
-      js-indent-level               ; js-mode
-      js2-basic-offset              ; js2-mode
-      js3-indent-level              ; js3-mode
-      lua-indent-level              ; lua-mode
-      nxml-attribute-indent         ; nxml-mode
-      nxml-child-indent             ; nxml-mode
-      nxml-outline-child-indent     ; nxml-mode
-      pug-tab-width                 ; pug-mode
-      python-indent                 ; python-mode
-      ruby-indent-level             ; ruby-mode
-      sgml-basic-offset             ; js2-mode, html-mode, svelte-mode
-      sh-indentation                ; sh-mode
-      smie-indent-basic             ; smie.el (generic)
-      standard-indent               ; indent.el (generic)
-      swift-mode:basic-offset       ; swift-mode.el
-      tab-width                     ; built-in
-      typescript-indent-level       ; typescript-mode
-      web-mode-code-indent-offset   ; web-mode
-      web-mode-css-indent-offset    ; web-mode
-      yaml-indent-offset)           ; yaml-mode
-     :tabWidth)
 
     ((js-indent-first-init)
      nil)
@@ -786,7 +752,9 @@ should be used when filing bug reports."
 
 ;;;###autoload
 (define-minor-mode prettier-mode
-  "Runs prettier on file save when this mode is turned on."
+  "Sync Prettier settings and format on file save.
+
+For more information see Info node `(prettier)Top'."
   :lighter prettier-lighter
   (if prettier-mode
       (progn
@@ -841,6 +809,17 @@ should be used when filing bug reports."
 
 
 ;;;; Support
+
+(defun prettier--read-aux-file (file-name)
+  "Read supplemental file named FILE-NAME, return as string."
+  (with-temp-buffer
+    (insert-file-contents-literally
+     (or
+      (cl-find-if #'file-exists-p
+                  (list (concat prettier-el-home file-name)
+                        (concat prettier-el-home "dist/" file-name)))
+      (error "Cannot find supplemental file %S" file-name)))
+    (buffer-string)))
 
 (defun prettier--in-node-modules-p ()
   "Return t if current buffer's file is beneath `node_modules'."
@@ -929,11 +908,7 @@ Additional considerations were:
                        (or (prettier--buffer-remote-p 'host)
                            "(local)"))))
          (payload
-          (with-temp-buffer
-            (insert-file-contents-literally
-             (concat prettier-el-home
-                     "prettier-el.js.gz.base64"))
-            (buffer-string)))
+          (prettier--read-aux-file "prettier-el.js.gz.base64"))
          (new-process
           (progn
             (with-current-buffer buf
@@ -944,10 +919,7 @@ Additional considerations were:
              buf
              (prettier--pick-localname node-command)
              "--eval"
-             (with-temp-buffer
-               (insert-file-contents-literally
-                (concat prettier-el-home "bootstrap-min.js"))
-               (buffer-string))
+             (prettier--read-aux-file "bootstrap-min.js")
              (number-to-string (length payload))))))
     (set-process-query-on-exit-flag new-process nil)
     (set-process-sentinel
@@ -1112,6 +1084,66 @@ separate window."
             (quit-window t win)
           (kill-buffer errbuf))))))
 
+(defun prettier--backup-buffer-local-values (func)
+  "Invoke FUNC and record which buffer-local variables get set.
+
+More precisely, return a list with one element for each
+buffer-local variable FUNC set (variables killed by FUNC are
+ignored), where each element is of the form:
+
+`(SYM . NEW-VALUE)', for variables that didn't previously exist or
+were void, or
+
+`(SYM NEW-VALUE . OLD-VALUE)' for variables that were.
+
+Here, SYM is the symbol identifying the variable, NEW-VALUE is
+the value it was set to, and OLD-VALUE is the value it had
+previously (if applicable.)"
+  (let ((prev-vars (buffer-local-variables)))
+    (funcall func)
+    (cl-reduce (lambda (accu var-setting)
+                 (when (consp var-setting)
+                   (let* ((var (car var-setting))
+                          (next-value (cdr var-setting))
+                          (prev-setting (assoc var prev-vars)))
+                     (unless (and prev-setting
+                                  (equal next-value (cdr prev-setting)))
+                       (push (cons var
+                                   (if prev-setting
+                                       (cons next-value
+                                             (cdr prev-setting))
+                                     next-value))
+                             accu))))
+                 accu)
+               (buffer-local-variables)
+               :initial-value nil)))
+
+(defun prettier--revert-buffer-local-values (backup)
+  "Reverts the settings recorded in BACKUP.
+
+BACKUP should be a value returned by
+`prettier--backup-buffer-local-values'.  Each element in the list
+is handled as follows:
+
+- If the current value of the variable is different from the one
+  that was set by the function passed to
+  `prettier--backup-buffer-local-values', leave the variable
+  alone (do nothing).
+
+- Otherwise, restore the previous value or unbind the variable if
+  it was previously unbound or void."
+  (mapc (lambda (setting)
+          (let* ((var (car setting))
+                 (values (cdr setting))
+                 (next-value (if (consp values) (car values) values)))
+            (when (and (boundp var)
+                       (local-variable-p var)
+                       (equal (eval var) next-value))
+              (if (consp values)
+                  (set var (cdr values))
+                (kill-local-variable var)))))
+        backup))
+
 (defun prettier--set-config (config)
   "Try to sync prettier configuration for current buffer.
 
@@ -1131,49 +1163,45 @@ post-formatting as possible."
 
      prettier-previous-local-settings
      (when options
-       (seq-filter
-        #'identity
-        (apply
-         #'append
-         (mapcar
-          (lambda (setting)
-            (let* ((vars (nth 0 setting))
-                   (source (nth 1 setting))
-                   (value (funcall
-                           (or (nth 2 setting) #'identity)
-                           (if (keywordp source)
-                               (plist-get options source)
-                             source))))
-              (unless (eq value 'unchanged)
-                (mapcar
-                 (lambda (var)
-                   (when (boundp var)
-                     (let ((result
-                            (list var (local-variable-p var)
-                                  (eval var)
-                                  value)))
-                       (set (make-local-variable var) value)
-                       result)))
-                 vars))))
-          prettier-sync-settings)))))))
+       (let ((end-of-line (plist-get options :endOfLine)))
+         (set-buffer-file-coding-system
+          (merge-coding-systems
+           (cond
+            ((equal end-of-line "lf") 'undecided-unix)
+            ((equal end-of-line "cr") 'undecided-mac)
+            ((equal end-of-line "crlf") 'undecided-dos)
+            (t 'undecided))
+           buffer-file-coding-system)
+          t
+          t))
+       (prettier--backup-buffer-local-values
+        (lambda ()
+          (editorconfig-set-indentation
+           (if (eq (plist-get options :useTabs) t) "tab" "space")
+           (number-to-string (plist-get options :tabWidth))
+           nil)
+          (editorconfig-set-line-length
+           (number-to-string (plist-get options :printWidth)))
+
+          (mapc (lambda (setting)
+                  (let* ((vars (nth 0 setting))
+                         (source (nth 1 setting))
+                         (value (funcall
+                                 (or (nth 2 setting) #'identity)
+                                 (if (keywordp source)
+                                     (plist-get options source)
+                                   source))))
+                    (unless (eq value 'unchanged)
+                      (mapc
+                       (lambda (var)
+                         (when (boundp var)
+                           (set (make-local-variable var) value)))
+                       vars))))
+                prettier-sync-settings)))))))
 
 (defun prettier--revert-synced-config ()
   "Revert any change made by `prettier--set-config'."
-  (mapc
-   (lambda (local-setting)
-     (let ((var (car local-setting)))
-       (cond
-        ((or (not (boundp var))
-             (not (eq (eval var) (nth 3 local-setting))))
-         ;; If the setting has changed since we set it, or the
-         ;; variable was unbound in the meantime, leave it alone
-         nil)
-        ((null (nth 1 local-setting))
-         ;; setting wasn't local before, kill the variable
-         (kill-local-variable var))
-        (t
-         ;; otherwise, set it to previous value
-         (set var (nth 2 local-setting))))))
+  (prettier--revert-buffer-local-values
    prettier-previous-local-settings))
 
 (iter2-defun prettier--request-iter (prettier-process
@@ -1544,7 +1572,7 @@ formatting."
                                 (+ work-point (decode-coding-region
                                                (cadr command)
                                                (caddr command)
-                                               'utf-8
+                                               'utf-8-unix
                                                work-buf))))))
                         (with-current-buffer work-buf
                           (goto-char (setq work-point (cdr work-range))))

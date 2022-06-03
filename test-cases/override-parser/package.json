@@ -1,7 +1,7 @@
 {
-  "devDependencies": {
-    "prettier": "^2.2.1"
-  },
+  "name": "override-parser",
+  "version": "0.0.0",
+  "private": true,
   "prettier": {
     "overrides": [
       {

@@ -8,4 +8,4 @@ node_modules/
 *.sig
 *.elc
 *.log
-yarn.lock
+package-lock.json

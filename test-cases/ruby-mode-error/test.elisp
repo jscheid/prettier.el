@@ -1,0 +1,4 @@
+(progn
+  (with-current-buffer prettier-error-buffer-name
+    (should (not (equal (buffer-string) ""))))
+  (kill-buffer prettier-error-buffer-name))

@@ -11,33 +11,16 @@ If you would rather not use Vagrant, you can derive instructions for how to set
 up your local build environment from `Vagrantfile`; if you do so, please
 consider sending a PR with instructions.
 
-## Base directory
-
-Ensure that variable `prettier-el-home` is set to the source directory or
-`prettier.el` might pick up the wrong version of the JavaScript files. One way
-to do so is the following:
-
-```elisp
-(defvar prettier-el-home "/path/to/this/directory/dist/")
-(use-package prettier :load-path prettier-el-home)
-```
-
 ## Building
 
 Initially, and after changes to JS code, you will need to build by running
-`make`, then force a restart of the daemon process(es).
-
-You can do so by toggling `M-x global-prettier-mode` off and back on; by
-manually killing any `*prettier...*` buffers, or by running
-`M-x eval-expression RET (prettier--quit-all-processes) RET`, whichever
-you find works best for you. The main objective is for all `*prettier...*`
-process buffers to be killed so that the next time you use it, a fresh daemon is
-started.
+`make`, then force a restart of the daemon process(es) by running
+`prettier-restart`.
 
 ## Linting and testing
 
 To run the linters locally, follow a similar approach to the CI pipeline
-defined in `.github/workflows/`, e.g. first set up a sandbox:
+defined in `.github/workflows/`, i.e. first set up a sandbox:
 
     ./makem.sh -v --sandbox=sandbox --install-{deps,linters}
 

@@ -30,9 +30,9 @@ Vagrant.configure('2') do |config|
       https://github.com/jgm/pandoc/releases/download/2.11.1.1/pandoc-2.11.1.1-1-amd64.deb
     dpkg --install pandoc-2.11.1.1-1-amd64.deb
     pip3 install panflute>=2.0.5
-    npm install -g npm@8.11.0
+    npm install -g yarn@1.22.18
     cd /vagrant
-    npm ci
+    yarn
   SHELL
 end
 

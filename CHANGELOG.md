@@ -9,6 +9,23 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- `prettier-diff-timeout-seconds` customization option
+- `prettier-diff-edit-cost` customization option
+
+## Changed
+
+- Optimize edits
+- Upgrade dependencies
+- Use `editorconfig` package for syncing `tabWidth`, `useTabs` and `printWidth`
+  settings
+
+## Fixed
+
+- Don't deactivate region on format
+- Handle Prettier endOfLine setting
+
 ## [1.3.0] - 2022-06-01
 
 ## Added

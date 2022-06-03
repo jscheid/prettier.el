@@ -2,7 +2,7 @@
 
 ;; Copyright (c) 2018-present Julian Scheid
 
-;; Package-Requires: ((web-mode "20200501") (elm-mode "20200406") (pug-mode "20180513") (svelte-mode "20210222") (toml-mode "20161107") (solidity-mode "20200418") (vue-mode "20190415") (lsp-mode "20201111") (noflet "20141102") (f "20191110") (json-mode "20190123") (typescript-mode "20201002") (ert-async "0.1"))
+;; Package-Requires: ((web-mode "20200501") (elm-mode "20200406") (pug-mode "20180513") (svelte-mode "20210222") (toml-mode "20161107") (solidity-mode "20200418") (vue-mode "20190415") (lsp-mode "20201111") (noflet "20141102") (f "20191110") (json-mode "20190123") (typescript-mode "20201002") (ert-async "0.1") (f "20220531"))
 
 ;;; Commentary:
 
@@ -18,13 +18,18 @@
 (require 'prettier)
 (require 'svelte-mode)
 (require 'typescript-mode)
+(require 'f)
+(require 'hexl)
 
 (eval-when-compile
   (require 'ert-async))
 
-(setq prettier-el-home (concat
-                        (file-name-directory load-file-name)
-                        "dist/"))
+(defun prettier--hexlify-str (str)
+  "Return STR, hexlified."
+  (with-temp-buffer
+    (insert str)
+    (hexlify-buffer)
+    (buffer-string)))
 
 (defun prettier--eval-file-if-exists (filename)
   "Read and eval file FILENAME if it exists."
@@ -37,31 +42,47 @@
 (defun prettier--run-test-case (directory)
   "Run prettier test in DIRECTORY."
   (let ((default-directory directory))
-    (shell-command "npm ci")
+    (shell-command "yarn")
     (mapc
      (lambda (original-file)
        (let ((actual
-              (with-temp-buffer
-                (insert-file-contents original-file)
-                (setq buffer-file-name original-file)
-                (rename-buffer original-file)
-                (prettier--eval-file-if-exists "prepare.elisp")
-                (set-auto-mode)
-                (prettier--eval-file-if-exists "setup.elisp")
-                (let ((prettier-diff-timeout-seconds 0))
-                  (prettier-prettify))
-                (prettier--eval-file-if-exists "test.elisp")
-                (buffer-substring-no-properties (point-min)
-                                                (point-max))))
+              (let ((prettier-diff-timeout-seconds 0)
+                    (out-file (replace-regexp-in-string
+                               "\\.original\\."
+                               ".test."
+                               original-file)))
+                (with-temp-buffer
+                  (unwind-protect
+                      (progn
+                        (insert-file-contents original-file)
+                        (setq buffer-file-name out-file)
+                        (rename-buffer out-file)
+                        (prettier--eval-file-if-exists "prepare.elisp")
+                        (set-auto-mode)
+                        (prettier--eval-file-if-exists "setup.elisp")
+                        (prettier-mode 1)
+                        (save-buffer 0)
+                        (prettier--eval-file-if-exists "test.elisp")
+                        (should (equal (with-current-buffer "*prettier (local)*"
+                                         (buffer-string))
+                                       ""))
+                        (let ((error-buffer
+                               (get-buffer prettier-error-buffer-name)))
+                          (when error-buffer
+                            (should (equal (with-current-buffer error-buffer
+                                             (buffer-string))
+                                           ""))))
+
+                        (f-read-bytes out-file))
+                    (delete-file out-file)))))
              (expected
-              (with-temp-buffer
-                (insert-file-contents
-                 (replace-regexp-in-string
-                  "\\.original\\."
-                  ".prettier."
-                  original-file))
-                (buffer-string))))
-         (should (equal actual expected))
+              (f-read-bytes
+               (replace-regexp-in-string
+                "\\.original\\."
+                ".prettier."
+                original-file))))
+         (should (equal (prettier--hexlify-str actual)
+                        (prettier--hexlify-str expected)))
          (prettier--eval-file-if-exists "teardown.elisp")))
      (directory-files directory t "\\.original\\."))))
 
@@ -177,6 +198,21 @@ Header
 #+end_src
 
 Footer"))))
+
+(ert-deftest sync-test ()
+  "Test syncing settings from Prettier."
+  (with-temp-buffer
+    (js-mode)
+    (setq buffer-file-name (concat prettier-el-home "test.js"))
+
+    (setq js-indent-level 10)
+    (prettier-mode)
+    (should (equal js-indent-level 2))
+    (should (local-variable-p 'js-indent-first-init))
+    (should (null js-indent-first-init))
+    (prettier-mode -1)
+    (should (equal js-indent-level 10))
+    (should (not (local-variable-p 'js-indent-first-init)))))
 
 (provide 'prettier-tests)
 

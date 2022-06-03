@@ -139,7 +139,7 @@ jobs:
         run: |
           set -eou pipefail
           mkdir -p dist
-          tar xf ${{ steps.download.outputs.download-path }} \
+          tar xf ${{ steps.download.outputs.download-path }}/${{ needs.build.outputs.tarball_name }} \
             --strip-components=1 \
             --exclude=prettier-pkg.el \
             --directory=dist

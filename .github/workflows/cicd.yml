@@ -46,6 +46,8 @@ jobs:
           - 27.2
           - 28.1
           - snapshot
+    outputs:
+      version: ${{ env.version }}
     steps:
       - uses: purcell/setup-emacs@master
         with:
@@ -121,7 +123,7 @@ jobs:
       - name: Download build
         uses: actions/download-artifact@v2
         with:
-          name: "prettier-${{ env.version }}.tar"
+          name: "prettier-${{ needs.build.outputs.version }}.tar"
           path: prettier.tar
 
       - name: Unpack tarball
@@ -201,7 +203,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: prettier.tar
-          asset_name: "prettier-${{ env.version }}.tar"
+          asset_name: "prettier-${{ needs.build.outputs.version }}.tar"
           asset_content_type: application/x-tar
 # Local Variables:
 # eval: (outline-minor-mode)

@@ -47,7 +47,7 @@ jobs:
           - 28.1
           - snapshot
     outputs:
-      version: ${{ env.version }}
+      tarball_name: "${{ steps.build.outputs.tarball_name }}"
     steps:
       - uses: purcell/setup-emacs@master
         with:
@@ -55,7 +55,11 @@ jobs:
 
       - uses: actions/checkout@v2
 
+      - name: Install Yarn
+        run: npm install -g yarn
+
       - uses: c-hive/gha-yarn-cache@v2
+        if: ${{ !env.ACT }}
 
       - name: Initialize sandbox
         uses: nick-fields/retry@v2
@@ -71,9 +75,6 @@ jobs:
 
       # The "all" rule is not used, because it treats compilation warnings
       # as failures, so linting and testing are run as separate steps.
-
-      - name: Install Yarn
-        run: npm install -g yarn
 
       - name: Install JavaScript dependencies
         run: yarn
@@ -99,21 +100,23 @@ jobs:
 
       - name: Build and Test
         if: always() # Run test even if linting fails.
+        id: build
         run: |
           set -x
           make
           ./makem.sh -vv --sandbox=$SANDBOX_DIR test
           version=$(awk 'END {gsub(/"/, "", $3); print $3}' < dist/prettier-pkg.el)
-          tar cf prettier-${version}.tar --transform="s,^dist/,prettier-${version}/," dist/*
-          ls -ld prettier-${version}.tar
-          echo "version=${version}" >> $GITHUB_ENV
+          tarball_name="prettier-${version}.tar"
+          tar cf "${tarball_name}"  --transform="s,^dist/,prettier-${version}/," dist/*
+          ls -ld "${tarball_name}"
+          echo "::set-output name=tarball_name::${tarball_name}"
 
       - name: Upload build
         if: matrix.emacs_version == '26.3'
         uses: actions/upload-artifact@v2
         with:
-          path: "prettier-${{ env.version }}.tar"
-          name: "prettier-${{ env.version }}.tar"
+          path: "${{ steps.build.outputs.tarball_name }}"
+          name: "${{ steps.build.outputs.tarball_name }}"
 
   deploy:
     needs: build
@@ -124,7 +127,7 @@ jobs:
         id: download
         uses: actions/download-artifact@v3
         with:
-          name: "prettier-${{ needs.build.outputs.version }}.tar"
+          name: "${{ needs.build.outputs.tarball_name }}"
 
       - name: Unpack tarball
         run: |
@@ -203,7 +206,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ steps.download.outputs.download-path }}
-          asset_name: "prettier-${{ needs.build.outputs.version }}.tar"
+          asset_name: "${{ needs.build.outputs.tarball_name }}"
           asset_content_type: application/x-tar
 # Local Variables:
 # eval: (outline-minor-mode)

@@ -47,7 +47,7 @@ jobs:
           - 28.1
           - snapshot
     outputs:
-      tarball_name: "${{ steps.build.outputs.tarball_name }}"
+      tarball_name: "${{ steps.upload.outputs.tarball_name }}"
     steps:
       - uses: purcell/setup-emacs@master
         with:
@@ -113,10 +113,16 @@ jobs:
 
       - name: Upload build
         if: matrix.emacs_version == '26.3'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: "${{ steps.build.outputs.tarball_name }}"
           name: "${{ steps.build.outputs.tarball_name }}"
+
+      - name: Set build output
+        if: matrix.emacs_version == '26.3'
+        id: upload
+        run: |
+          echo "::set-output name=tarball_name::${{ steps.build.outputs.tarball_name }}"
 
   deploy:
     needs: build

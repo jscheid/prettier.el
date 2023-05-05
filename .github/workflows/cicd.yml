@@ -90,6 +90,9 @@ jobs:
       - name: Install panflute
         run: sudo pip3 install 'panflute==1.12.5'
 
+      - name: Install prettier-ruby dependencies
+        run: sudo gem install bundler prettier_print syntax_tree syntax_tree-haml syntax_tree-rbs
+
       - name: Lint
         run: ./makem.sh -vv --sandbox=$SANDBOX_DIR lint-checkdoc lint-compile lint-declare lint-package lint-regexps
 

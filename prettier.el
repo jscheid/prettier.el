@@ -785,20 +785,23 @@ For more information see Info node `(prettier)Top'."
           prettier-version nil
           prettier-previous-local-settings nil)))
 
+(defun prettier--turn-on-if-appropriate ()
+  "Turn on prettier-mode in current buffer if appropriate."
+  (when (and (not prettier-mode)
+             (or (null prettier-mode-ignore-buffer-function)
+                 (not (funcall
+                       prettier-mode-ignore-buffer-function)))
+             (prettier--parsers))
+    (with-temp-message
+        (unless (eq prettier-pre-warm 'none)
+          "Prettier pre-warming...")
+      (prettier-mode))))
+
 ;;;###autoload
 (define-globalized-minor-mode
   global-prettier-mode
   prettier-mode
-  (lambda ()
-    (when (and (not prettier-mode)
-               (or (null prettier-mode-ignore-buffer-function)
-                   (not (funcall
-                         prettier-mode-ignore-buffer-function)))
-               (prettier--parsers))
-      (with-temp-message
-          (unless (eq prettier-pre-warm 'none)
-            "Prettier pre-warming...")
-        (prettier-mode))))
+  prettier--turn-on-if-appropriate
   :group 'prettier)
 
 (add-hook
@@ -885,7 +888,7 @@ when launching a remote process.  Each process is started with
 NODE-COMMAND.
 
 The process is launched by running `node' with a minified version
-of `bootstrap.js` as a script provided on the command line; this
+of `bootstrap.js' as a script provided on the command line; this
 then loads a minified version of `prettier-el.js' from stdin.
 
 This setup is used for the following reasons:

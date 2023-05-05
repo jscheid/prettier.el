@@ -1248,7 +1248,7 @@ post-formatting as possible."
                                   t))))))
                       (let ((len (point-max)))
                         (and
-                         (null (tramp-accept-process-output
+                         (null (accept-process-output
                                 prettier-process
                                 prettier-timeout-seconds))
                          (eq len (point-max))

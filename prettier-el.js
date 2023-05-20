@@ -48,7 +48,10 @@ const ignoreParser = "ignored";
 
 const syncBeacon = Buffer.from("#prettier.el-sync#\n");
 
-/** @type{PrettierAPI} */
+/** @typedef {{ prettier: PrettierAPI, context: string, required: string, loadedAt: number }} */
+let PrettierMeta;
+
+/** @type{PrettierMeta} */
 let globalPrettier;
 
 /**
@@ -123,7 +126,7 @@ function makeU32(val) {
  * Find a globally installed Prettier or error if not found. Memoize results for
  * future lookups.
  *
- * @return {!PrettierAPI | !Error}
+ * @return {!PrettierMeta | !Error}
  */
 function getGlobalPrettier() {
   if (globalPrettier) {
@@ -164,7 +167,12 @@ function getGlobalPrettier() {
   for (let i = 0; i < pathOptions.length; ++i) {
     if (pathOptions[i]) {
       try {
-        return globalRequire(pathOptions[i]);
+        return {
+          prettier: globalRequire(pathOptions[i]),
+          context: "/",
+          required: pathOptions[i],
+          loadedAt: Date.now(),
+        };
       } catch (e) {
         if (
           !(e instanceof Error) ||
@@ -252,7 +260,7 @@ function tryRequirePrettier(targetRequire) {
  * Find locally installed Prettier, or null if not found.
  *
  * @param {!string} directory  The directory for which to find a local Prettier installation.
- * @return {PrettierAPI}  The Prettier package if found, or null if not found.
+ * @return {?PrettierMeta}  The Prettier package if found, or null if not found.
  */
 function getLocalPrettier(directory) {
   const targetRequire = createRequire(path["join"](directory, "package.json"));
@@ -260,7 +268,12 @@ function getLocalPrettier(directory) {
   // Try loading prettier for non-PnP packages and return it if found.
   const prettier = tryRequirePrettier(targetRequire);
   if (prettier) {
-    return prettier;
+    return {
+      prettier,
+      context: directory,
+      required: "prettier",
+      loadedAt: Date.now(),
+    };
   }
 
   // Try finding .pnp.[c]js and bail out if we can't find it.
@@ -271,7 +284,17 @@ function getLocalPrettier(directory) {
 
   // Setup PnP API and retry loading prettier.
   targetRequire(pnpJs)["setup"]();
-  return tryRequirePrettier(targetRequire);
+  const pnpPrettier = tryRequirePrettier(targetRequire);
+  if (pnpPrettier) {
+    return {
+      prettier: pnpPrettier,
+      context: directory,
+      required: "prettier",
+      loadedAt: Date.now(),
+    };
+  }
+
+  return null;
 }
 
 /**
@@ -282,7 +305,7 @@ function getLocalPrettier(directory) {
  * @param {!string} directory The directory for which to find the Prettier
  *    package.
  *
- * @return {!PrettierAPI | !Error}
+ * @return {!PrettierMeta | !Error}
  */
 function getPrettierForDirectory(directory) {
   if (prettierCache.has(directory)) {
@@ -318,7 +341,7 @@ function getPrettierForDirectory(directory) {
  *
  * @param {!string} filepath
  *
- * @return {!PrettierAPI} The Prettier package found.
+ * @return {!PrettierMeta} The Prettier package found.
  */
 function getPrettierForPath(filepath) {
   const result = path["isAbsolute"](filepath)
@@ -429,7 +452,7 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
 
       const editorconfig = packet[1] === "E".charCodeAt(0);
       const filepath = packet.toString("utf-8", 2, newlineIndex1);
-      const prettier = getPrettierForPath(filepath);
+      const { prettier } = getPrettierForPath(filepath);
       if (filepath.length > 0) {
         prettier.resolveConfig.sync(filepath, {
           editorconfig,
@@ -491,7 +514,7 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
     const inferParser = config["infer-parser"];
 
     try {
-      const prettier = getPrettierForPath(filepath);
+      const { prettier } = getPrettierForPath(filepath);
 
       const timeBeforeFormat = Date.now();
 
@@ -627,7 +650,9 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
       );
       const parsers = parseParsers(parsersString);
 
-      const prettier = getPrettierForPath(filepath);
+      const { prettier, context, required, loadedAt } = getPrettierForPath(
+        filepath
+      );
 
       const options =
         prettier.resolveConfig.sync(filepath, { editorconfig }) || {};
@@ -636,7 +661,12 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
       options["parser"] = function (_text, _parsers, options) {
         optionsStr = JSON.stringify({
           ["versions"]: Object.assign({}, process["versions"], {
-            ["prettier"]: prettier.version,
+            ["prettier"]: {
+              version: prettier.version,
+              context,
+              required,
+              loadedAt,
+            },
           }),
           ["options"]: options,
           ["bestParser"]: bestParser(

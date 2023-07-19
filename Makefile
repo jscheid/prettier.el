@@ -45,7 +45,7 @@ build/prettier-el-min.js: prettier-el.js externs.js
 		--hide_warnings_for=node_modules/diff-match-patch \
 		--dependency_mode=NONE \
 		--language_out=ECMASCRIPT5 \
-		--output_wrapper='%output%;m'
+		--output_wrapper='%output%;global.m'
 
 dist/bootstrap-min.js: bootstrap.js externs.js
 	node_modules/.bin/google-closure-compiler \

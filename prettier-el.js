@@ -638,12 +638,33 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
         .resolveConfig(filepath, { editorconfig })
         .then((x) => x || {});
 
-      // TODO: v3 support
       let optionsFromParser;
-      options["parser"] = function (_text, _parsers, options) {
-        optionsFromParser = options;
-        return { type: "NullLiteral" };
-      };
+      if (isV3(prettier)) {
+        const parserName = "prettier-el-null-parser";
+        options["parser"] = parserName;
+        options["plugins"] = [
+          {
+            ["parsers"]: {
+              [parserName]: {
+                async parse(_text, options) {
+                  // Remove 'parser' field for bestParser()
+                  // This plugin entry isn't removed as it'll not affect others
+                  delete options["parser"];
+                  optionsFromParser = options;
+                  return { type: "NullLiteral" };
+                },
+                ["astFormat"]: "estree",
+              },
+            },
+          },
+          ...(options["plugins"] || []),
+        ];
+      } else {
+        options["parser"] = function (_text, _parsers, options) {
+          optionsFromParser = options;
+          return { type: "NullLiteral" };
+        };
+      }
       await prettier.format(".", options);
 
       const parser = await bestParser(

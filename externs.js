@@ -58,10 +58,6 @@ PrettierAPI.prototype.resolveConfig = function(filePath, options, callback) {};
  */
 PrettierAPI.prototype.resolveConfig.sync = function(filePath, options) {};
 PrettierAPI.prototype.format = function(body, options) {};
-/**
- * @return {{formatted: !string}}
- */
-PrettierAPI.prototype.formatWithCursor = function(body, options) {};
 PrettierAPI.prototype.getSupportInfo = function() {};
 PrettierAPI.prototype.getFileInfo = function(filePath, options, callback) {};
 PrettierAPI.prototype.getFileInfo.sync = function(filePath, options) {};

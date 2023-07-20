@@ -318,7 +318,7 @@ function getPrettierForDirectory(directory) {
  *
  * @param {!string} filepath
  *
- * @return {!PrettierAPI} The Prettier package found.
+ * @return {!PrettierAPI | !V3CompatAPI} The Prettier package found.
  */
 function getPrettierForPath(filepath) {
   const result = path["isAbsolute"](filepath)
@@ -327,7 +327,9 @@ function getPrettierForPath(filepath) {
   if (result instanceof Error) {
     throw result;
   }
-  return result;
+
+  if (isV3(result)) return result;
+  return new V3CompatAPI(result);
 }
 
 function parseParsers(parsersString) {
@@ -357,14 +359,15 @@ function compatParsers(parsers) {
   );
 }
 
-function bestParser(prettier, parsers, options, filepath, inferParser) {
-  const fileInfo = filepath
-    ? prettier["getFileInfo"].sync(filepath, {
-        ["ignorePath"]: findFileInAncestry(path["dirname"](filepath), [
-          ".prettierignore",
-        ]),
-      })
-    : null;
+async function bestParser(prettier, parsers, options, filepath, inferParser) {
+  let fileInfo = null;
+  if (filepath) {
+    fileInfo = await prettier.getFileInfo(filepath, {
+      ["ignorePath"]: findFileInAncestry(path["dirname"](filepath), [
+        ".prettierignore",
+      ]),
+    });
+  }
 
   if (fileInfo && fileInfo["ignored"]) {
     return ignoreParser;
@@ -375,11 +378,12 @@ function bestParser(prettier, parsers, options, filepath, inferParser) {
   }
 
   if (parsers !== null) {
-    const supportedParsers = prettier.getSupportInfo
-      ? prettier
-          .getSupportInfo()
-          ["languages"].reduce((accu, lang) => accu.concat(lang["parsers"]), [])
-      : [];
+    const supportedParsers = await prettier.getSupportInfo().then((x) => {
+      return x["languages"].reduce(
+        (accu, lang) => accu.concat(lang["parsers"]),
+        []
+      );
+    });
     const result = parsers.find((parser) => supportedParsers.includes(parser));
     if (result) {
       return result;
@@ -420,7 +424,7 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
    *
    * @param {!Buffer} packet
    */
-  function handleWarmup(packet) {
+  async function handleWarmup(packet) {
     try {
       const newlineIndex1 = packet.indexOf(10);
       if (newlineIndex1 < 0) {
@@ -431,7 +435,7 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
       const filepath = packet.toString("utf-8", 2, newlineIndex1);
       const prettier = getPrettierForPath(filepath);
       if (filepath.length > 0) {
-        prettier.resolveConfig.sync(filepath, {
+        await prettier.resolveConfig(filepath, {
           editorconfig,
         });
       }
@@ -483,7 +487,7 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
    *
    * @param {!Buffer} packet
    */
-  function handleFormat(packet) {
+  async function handleFormat(packet) {
     const config = tryParseJson(packet.toString("utf-8", 1));
 
     const body = fs["readFileSync"](config["filename"], "utf8");
@@ -497,13 +501,14 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
 
       let options = {};
       if (path["isAbsolute"](filepath)) {
-        options =
-          prettier.resolveConfig.sync(filepath, {
+        options = await prettier
+          .resolveConfig(filepath, {
             ["editorconfig"]: config["editorconfig"],
-          }) || {};
+          })
+          .then((x) => x || {});
       }
 
-      const parser = bestParser(
+      const parser = await bestParser(
         prettier,
         compatParsers(config["parsers"]),
         options,
@@ -534,7 +539,7 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
       options["parser"] = parser;
       options["endOfLine"] = "lf";
 
-      const result = prettier.format(body, options);
+      const result = await prettier.format(body, options);
 
       const timeAfterFormat = Date.now();
 
@@ -605,7 +610,7 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
    *
    * @param {!Buffer} packet
    */
-  function handleOptions(packet) {
+  async function handleOptions(packet) {
     try {
       const newlineIndex1 = packet.indexOf(10);
       if (newlineIndex1 < 0) {
@@ -629,30 +634,34 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
 
       const prettier = getPrettierForPath(filepath);
 
-      const options =
-        prettier.resolveConfig.sync(filepath, { editorconfig }) || {};
+      const options = await prettier
+        .resolveConfig(filepath, { editorconfig })
+        .then((x) => x || {});
 
-      let optionsStr;
+      // TODO: v3 support
+      let optionsFromParser;
       options["parser"] = function (_text, _parsers, options) {
-        optionsStr = JSON.stringify({
+        optionsFromParser = options;
+        return { type: "NullLiteral" };
+      };
+      await prettier.format(".", options);
+
+      const parser = await bestParser(
+        prettier,
+        parsers,
+        optionsFromParser,
+        filepath,
+        inferParser
+      );
+      const optionsBuf = createBase64Buffer(
+        JSON.stringify({
           ["versions"]: Object.assign({}, process["versions"], {
             ["prettier"]: prettier.version,
           }),
-          ["options"]: options,
-          ["bestParser"]: bestParser(
-            prettier,
-            parsers,
-            options,
-            filepath,
-            inferParser
-          ),
-        });
-        return { type: "NullLiteral" };
-      };
-
-      prettier.format(".", options);
-
-      const optionsBuf = createBase64Buffer(optionsStr);
+          ["options"]: optionsFromParser,
+          ["bestParser"]: parser,
+        })
+      );
       process.stdout.write(
         Buffer.concat([
           syncBeacon,
@@ -674,14 +683,14 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
    * @param {!Array<!Buffer>} packetBuffers is an array of Buffers that make up
    *   the packet when concatenated.
    */
-  function handlePacket(packetBuffers) {
+  async function handlePacket(packetBuffers) {
     const packet = Buffer.concat(packetBuffers);
     if (packet[0] === "f".charCodeAt(0)) {
-      handleFormat(packet);
+      await handleFormat(packet);
     } else if (packet[0] === "o".charCodeAt(0)) {
-      handleOptions(packet);
+      await handleOptions(packet);
     } else if (packet[0] === "w".charCodeAt(0)) {
-      handleWarmup(packet);
+      await handleWarmup(packet);
     } else {
       protocolError();
     }
@@ -703,8 +712,9 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
       ) {
         buffers.push(slice.slice(0, 1));
         slice = slice.slice(1);
-        handlePacket(buffers);
-        buffers.length = 0;
+        handlePacket(buffers).then(() => {
+          buffers.length = 0;
+        });
       } else {
         const index = slice.indexOf("\n\n");
         if (index < 0) {
@@ -713,8 +723,9 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
         } else {
           buffers.push(slice.slice(0, index + 2));
           slice = slice.slice(index + 2);
-          handlePacket(buffers);
-          buffers.length = 0;
+          handlePacket(buffers).then(() => {
+            buffers.length = 0;
+          });
         }
       }
     }
@@ -763,4 +774,39 @@ function _createRequire(filename) {
   );
   mod["_compile"]("module.exports = require;", filename);
   return mod["exports"];
+}
+
+// The following is for Prettier version 2 and below.
+
+class V3CompatAPI {
+  /** @param {!PrettierAPI} prettier */
+  constructor(prettier) {
+    this.prettier = prettier;
+  }
+  get version() {
+    return this.prettier.version;
+  }
+  async format(body, options) {
+    return this.prettier.format(body, options);
+  }
+  async resolveConfig(filePath, options) {
+    return this.prettier.resolveConfig.sync(filePath, options);
+  }
+  async getFileInfo(filePath, options) {
+    return this.prettier.getFileInfo.sync(filePath, options);
+  }
+  async getSupportInfo() {
+    if (!this.prettier.getSupportInfo) {
+      return { ["languages"]: [] };
+    }
+    return this.prettier.getSupportInfo();
+  }
+}
+
+/**
+ * @param {!PrettierAPI | V3CompatAPI} prettier
+ * @return {!boolean}
+ */
+function isV3(prettier) {
+  return prettier.version.startsWith("3.");
 }

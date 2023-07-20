@@ -50,16 +50,16 @@ Buffer.prototype.writeUInt32LE = function(val, ofs) {};
  */
 function PrettierAPI() {}
 
-PrettierAPI.prototype.resolveConfig = function(filePath, options, callback) {};
-
+/** @type {string} */
+PrettierAPI.prototype.version;
 /**
  * @param {!string} filePath
  * @param {?{editorconfig: (boolean|undefined), useCache: (boolean|undefined)}=} options
  */
-PrettierAPI.prototype.resolveConfig.sync = function(filePath, options) {};
+PrettierAPI.prototype.resolveConfig = function(filePath, options) {};
 PrettierAPI.prototype.format = function(body, options) {};
 PrettierAPI.prototype.getSupportInfo = function() {};
-PrettierAPI.prototype.getFileInfo = function(filePath, options, callback) {};
+PrettierAPI.prototype.getFileInfo = function(filePath, options) {};
+// V2 APIs
+PrettierAPI.prototype.resolveConfig.sync = function(filePath, options) {};
 PrettierAPI.prototype.getFileInfo.sync = function(filePath, options) {};
-/** @type {string} */
-PrettierAPI.prototype.version;

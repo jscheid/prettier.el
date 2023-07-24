@@ -3,6 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "devDependencies": {
-    "@prettier/plugin-php": "^0.18.7"
+    "@prettier/plugin-php": "0.18.7"
   }
 }

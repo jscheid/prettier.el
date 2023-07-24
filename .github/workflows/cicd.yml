@@ -77,7 +77,10 @@ jobs:
       # as failures, so linting and testing are run as separate steps.
 
       - name: Install JavaScript dependencies
-        run: yarn
+        run: |
+          yarn
+          cd test-stable && yarn && cd ..
+          cd test-v2 && yarn && cd ..
 
       - name: Install additional packages
         run: sudo apt-get -y install aspell python3 python3-setuptools texinfo ruby

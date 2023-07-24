@@ -2,7 +2,7 @@
 
 ;; Copyright (c) 2018-present Julian Scheid
 
-;; Package-Requires: ((web-mode "20200501") (elm-mode "20200406") (pug-mode "20180513") (svelte-mode "20210222") (toml-mode "20161107") (solidity-mode "20200418") (vue-mode "20190415") (lsp-mode "20201111") (noflet "20141102") (f "20191110") (json-mode "20190123") (typescript-mode "20201002") (ert-async "0.1") (f "20220531"))
+;; Package-Requires: ((markdown-mode "20230723")(web-mode "20200501") (elm-mode "20200406") (pug-mode "20180513") (svelte-mode "20210222") (toml-mode "20161107") (solidity-mode "20200418") (vue-mode "20190415") (lsp-mode "20201111") (noflet "20141102") (f "20191110") (json-mode "20190123") (typescript-mode "20201002") (ert-async "0.1") (f "20220531"))
 
 ;;; Commentary:
 

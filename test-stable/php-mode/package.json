@@ -1,0 +1,21 @@
+{
+  "name": "php-mode",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "@prettier/plugin-php": "0.19.6"
+  },
+  "prettier": {
+    "plugins": [
+      "@prettier/plugin-php"
+    ],
+    "overrides": [
+      {
+        "files": "*.php",
+        "options": {
+          "parser": "php"
+        }
+      }
+    ]
+  }
+}

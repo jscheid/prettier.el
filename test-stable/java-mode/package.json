@@ -1,0 +1,21 @@
+{
+  "name": "java-mode",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "prettier-plugin-java": "2.2.0"
+  },
+  "prettier": {
+    "plugins": [
+      "prettier-plugin-java"
+    ],
+    "overrides": [
+      {
+        "files": "*.java",
+        "options": {
+          "parser": "java"
+        }
+      }
+    ]
+  }
+}

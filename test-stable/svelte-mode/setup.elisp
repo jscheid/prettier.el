@@ -1,0 +1,7 @@
+(progn
+  ;; needed for enabling svelte sub-modes
+  (font-lock-fontify-buffer)
+  ;; go to typescript section
+  (goto-char 23)
+  ;; activate sveltse sub-mode at point
+  (run-hooks 'post-command-hook))

@@ -1,0 +1,21 @@
+{
+  "name": "solidity-mode",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "prettier-plugin-solidity": "1.1.3"
+  },
+  "prettier": {
+    "plugins": [
+      "prettier-plugin-solidity"
+    ],
+    "overrides": [
+      {
+        "files": "*.sol",
+        "options": {
+          "parser": "solidity-parse"
+        }
+      }
+    ]
+  }
+}

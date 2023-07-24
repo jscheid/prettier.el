@@ -1,0 +1,14 @@
+{
+  "name": "prettier-el-test-v2",
+  "description": "Prettier.el test environment for Prettier version 2",
+  "version": "0.0.0",
+  "private": true,
+  "license": "GPLv3+",
+  "workspaces": [
+    "*"
+  ],
+  "packageManager": "yarn@1",
+  "devDependencies": {
+    "prettier": "2.6.2"
+  }
+}

@@ -88,15 +88,19 @@
 
 (mapc
  (lambda (test-directory)
-   (eval
-    `(ert-deftest
-         ,(intern (format "prettier-test-%s" (file-name-base test-directory))) ()
-       ,(format "Run tests in %S." test-directory)
-       (condition-case err
-           (prettier--run-test-case ,test-directory)
-         ((quit error)
-          (sit-for 0.25)
-          (signal (car err) (cdr err)))))))
+   (let ((dirname (file-name-base test-directory))
+         (pdirname (file-name-base
+                    (directory-file-name
+                     (file-name-directory test-directory)))))
+     (eval
+      `(ert-deftest
+           ,(intern (format "prettier-testcase-%s/%s" dirname pdirname)) ()
+         ,(format "Run testcases %s in %s." dirname pdirname)
+         (condition-case err
+             (prettier--run-test-case ,test-directory)
+           ((quit error)
+            (sit-for 0.25)
+            (signal (car err) (cdr err))))))))
  (mapcar
   #'car
   (seq-filter
@@ -104,11 +108,15 @@
      (and
       (not (equal "node_modules" (file-name-base (car file-and-attributes))))
       (eq t (cadr file-and-attributes))))
-   (directory-files-and-attributes
-    (concat default-directory
-            "test-v2/")
-    t
-    "[a-z].*"))))
+   (apply
+    'append
+    (mapcar
+     (lambda (x)
+       (directory-files-and-attributes
+        (file-name-as-directory (concat default-directory x))
+        t
+        "[a-z].*"))
+     '("test-stable" "test-v2"))))))
 
 
 (defmacro prettier--ert-deftest-for-dirs (testname testdoc dirnames &rest body)
@@ -148,7 +156,7 @@ accepts a `done' argument."
 (prettier--ert-deftest-for-dirs
  "prettier-test-prettier-version"
  "Ensure the prettier version of each directory."
- '("test-v2")
+ '("test-stable" "test-v2")
  (with-temp-buffer
    (setq buffer-file-name (concat default-directory "test.js"))
    (js-mode)
@@ -159,6 +167,7 @@ accepts a `done' argument."
               (vers (plist-get (plist-get info :prettier-options) :versions))
               (pver (plist-get vers :prettier)))
          (cond
+          ((equal dirname "test-stable") (should (equal pver "3.0.0")))
           ((equal dirname "test-v2") (should (equal pver "2.6.2")))
           (t (error (format "Unexpected directory name: %s" dirname)))))))))
 
@@ -166,7 +175,7 @@ accepts a `done' argument."
 (prettier--ert-deftest-for-dirs
  "web-mode-typescript"
  ""
- '("test-v2")
+ '("test-stable" "test-v2")
  (with-temp-buffer
    (setq buffer-file-name (concat default-directory "test.ts"))
    (web-mode)
@@ -176,7 +185,7 @@ accepts a `done' argument."
 (prettier--ert-deftest-for-dirs
  "prettier--parsers-temp-buffer"
  ""
- '("test-v2")
+ '("test-stable" "test-v2")
  (with-temp-buffer
    (setq buffer-file-name (concat default-directory "test.js"))
    (js-mode)
@@ -188,7 +197,7 @@ accepts a `done' argument."
 (prettier--ert-deftest-for-dirs
  "customize-prettier"
  ""
- '("test-v2")
+ '("test-stable" "test-v2")
  (customize-option 'prettier-pre-warm)
  (customize-option 'prettier-inline-errors-flag)
  (customize-option 'prettier-mode-sync-config-flag)
@@ -216,7 +225,7 @@ accepts a `done' argument."
 (prettier--ert-deftest-async-for-dirs
  "restart-prettier"
  ""
- '("test-v2")
+ '("test-stable" "test-v2")
  '(lambda (done)
     (prettier--quit-all-processes)
     (delay
@@ -238,7 +247,7 @@ accepts a `done' argument."
 (prettier--ert-deftest-for-dirs
  "load-local-config-once"
  "Ensure config is loaded only once for buffer without file."
- '("test-v2")
+ '("test-stable" "test-v2")
  (with-temp-buffer (js-mode) (prettier-mode))
  (cl-flet ((prettier--load-config (&rest) (error "Called again")))
    (with-temp-buffer (js-mode) (prettier-mode))))
@@ -247,7 +256,7 @@ accepts a `done' argument."
 (prettier--ert-deftest-for-dirs
  "org-mode-src-block"
  "Formatting a source block in org mode."
- '("test-v2")
+ '("test-stable" "test-v2")
  (with-temp-buffer
    (org-mode)
    (setq buffer-file-name (concat default-directory "test.org"))
@@ -279,7 +288,7 @@ Footer"))))
 (prettier--ert-deftest-for-dirs
  "sync-test"
  "Test syncing settings from Prettier."
- '("test-v2")
+ '("test-stable" "test-v2")
  (with-temp-buffer
    (js-mode)
    (setq buffer-file-name (concat default-directory "test.js"))

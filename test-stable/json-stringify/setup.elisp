@@ -1,0 +1,5 @@
+(setq prettier-parsers '(json-stringify))
+
+;; Local Variables:
+;; mode: emacs-lisp
+;; End:

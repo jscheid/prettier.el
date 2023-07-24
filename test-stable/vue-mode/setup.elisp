@@ -1,0 +1,9 @@
+(progn
+  (let ((noninteractive nil))
+    (mmm-mode-on))
+  (goto-char 57)
+  (mmm-update-submode-region))
+
+;; Local Variables:
+;; mode: emacs-lisp
+;; End:

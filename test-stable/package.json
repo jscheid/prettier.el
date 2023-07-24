@@ -1,0 +1,14 @@
+{
+  "name": "prettier-el-test-stable",
+  "description": "Prettier.el test environment for Prettier stable",
+  "version": "0.0.0",
+  "private": true,
+  "license": "GPLv3+",
+  "workspaces": [
+    "*"
+  ],
+  "packageManager": "yarn@1",
+  "devDependencies": {
+    "prettier": "3.0.0"
+  }
+}

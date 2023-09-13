@@ -328,7 +328,7 @@ function getPrettierForPath(filepath) {
     throw result;
   }
 
-  if (isV3(result)) return result;
+  if (isV3Later(result)) return result;
   return new V3CompatAPI(result);
 }
 
@@ -639,7 +639,7 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
         .then((x) => x || {});
 
       let optionsFromParser;
-      if (isV3(prettier)) {
+      if (isV3Later(prettier)) {
         const parserName = "prettier-el-null-parser";
         options["parser"] = parserName;
         options["plugins"] = [
@@ -828,6 +828,8 @@ class V3CompatAPI {
  * @param {!PrettierAPI | V3CompatAPI} prettier
  * @return {!boolean}
  */
-function isV3(prettier) {
-  return prettier.version.startsWith("3.");
+function isV3Later(prettier) {
+  const ver = prettier.version || "";
+  const major = ver.split(".")[0];
+  return Number(major) >= 3;
 }

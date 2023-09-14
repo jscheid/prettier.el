@@ -42,9 +42,9 @@ jobs:
       fail-fast: false
       matrix:
         emacs_version:
-          - 26.3
-          - 27.2
-          - 28.1
+          - 27.1
+          - 28.2
+          - 29.1
           - snapshot
     outputs:
       tarball_name: "${{ steps.upload.outputs.tarball_name }}"
@@ -115,14 +115,14 @@ jobs:
           echo "::set-output name=tarball_name::${tarball_name}"
 
       - name: Upload build
-        if: matrix.emacs_version == '26.3'
+        if: matrix.emacs_version == '27.1'
         uses: actions/upload-artifact@v3
         with:
           path: "${{ steps.build.outputs.tarball_name }}"
           name: "${{ steps.build.outputs.tarball_name }}"
 
       - name: Set build output
-        if: matrix.emacs_version == '26.3'
+        if: matrix.emacs_version == '27.1'
         id: upload
         run: |
           echo "::set-output name=tarball_name::${{ steps.build.outputs.tarball_name }}"

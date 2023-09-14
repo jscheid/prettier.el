@@ -21,7 +21,7 @@ version 0.9.0 they are now documented in `CHANGELOG.md`.
 
 A tarball is generated for every pull request. It can be downloaded by
 going to the Github pull request page, clicking on "Details" for the
-topmost check (called something like "build (26.3)"), then on
+topmost check (called something like "build (27.1)"), then on
 "Artifacts" and finally on "prettier.tar".
 
 Github currently [insists on wrapping it in a Zip

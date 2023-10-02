@@ -33,6 +33,8 @@ Vagrant.configure('2') do |config|
     npm install -g yarn@1.22.18
     cd /vagrant
     yarn
+    cd test-stable && yarn && cd ..
+    cd test-v2 && yarn && cd ..
   SHELL
 end
 

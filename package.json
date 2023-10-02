@@ -2,16 +2,12 @@
   "name": "prettier-el",
   "description": "Helper package for building the Emacs package",
   "version": "0.0.0",
-  "private": "true",
+  "private": true,
   "license": "GPLv3+",
-  "workspaces": [
-    "test-cases/*"
-  ],
   "packageManager": "yarn@1",
   "devDependencies": {
     "closurecompiler-externs": "1.0.4",
-    "diff-match-patch": "1.0.5",
-    "prettier": "^2.6.2"
+    "diff-match-patch": "1.0.5"
   },
   "dependencies": {
     "google-closure-compiler": "20220405.0.0",

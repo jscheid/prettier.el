@@ -1,0 +1,21 @@
+{
+  "name": "nxml-mode",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "@prettier/plugin-xml": "3.1.1"
+  },
+  "prettier": {
+    "plugins": [
+      "@prettier/plugin-xml"
+    ],
+    "overrides": [
+      {
+        "files": "*.xml",
+        "options": {
+          "parser": "xml"
+        }
+      }
+    ]
+  }
+}

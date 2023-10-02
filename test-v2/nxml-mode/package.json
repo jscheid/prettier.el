@@ -1,0 +1,8 @@
+{
+  "name": "nxml-mode",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "@prettier/plugin-xml": "2.2.0"
+  }
+}

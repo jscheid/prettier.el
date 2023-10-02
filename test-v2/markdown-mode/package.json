@@ -1,0 +1,9 @@
+{
+  "name": "markdown-mode",
+  "version": "0.0.0",
+  "private": true,
+  "prettier": {
+    "proseWrap": "always",
+    "printWidth": 8
+  }
+}

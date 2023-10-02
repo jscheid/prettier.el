@@ -1,0 +1,22 @@
+{
+  "name": "svelte-mode",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "prettier-plugin-svelte": "3.0.0",
+    "svelte": "4.1.1"
+  },
+  "prettier": {
+    "plugins": [
+      "prettier-plugin-svelte"
+    ],
+    "overrides": [
+      {
+        "files": "*.svelte",
+        "options": {
+          "parser": "svelte"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "ruby-mode-error",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "@prettier/plugin-ruby": "2.1.0"
+  }
+}

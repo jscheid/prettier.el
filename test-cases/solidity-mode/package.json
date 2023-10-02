@@ -1,8 +1,0 @@
-{
-  "name": "solidity-mode",
-  "version": "0.0.0",
-  "private": true,
-  "devDependencies": {
-    "prettier-plugin-solidity": "^1.0.0-beta.19"
-  }
-}

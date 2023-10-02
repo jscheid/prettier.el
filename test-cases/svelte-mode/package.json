@@ -1,9 +1,0 @@
-{
-  "name": "svelte-mode",
-  "version": "0.0.0",
-  "private": true,
-  "devDependencies": {
-    "prettier-plugin-svelte": "^2.7.0",
-    "svelte": "^3.48.0"
-  }
-}

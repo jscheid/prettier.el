@@ -1,8 +1,0 @@
-{
-  "name": "toml-mode",
-  "version": "0.0.0",
-  "private": true,
-  "devDependencies": {
-    "prettier-plugin-toml": "^0.3.1"
-  }
-}

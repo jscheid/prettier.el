@@ -1,0 +1,8 @@
+{
+  "name": "java-mode",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "prettier-plugin-java": "1.6.2"
+  }
+}

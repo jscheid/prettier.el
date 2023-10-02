@@ -1,0 +1,21 @@
+{
+  "name": "sh-mode",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "prettier-plugin-sh": "0.13.1"
+  },
+  "prettier": {
+    "plugins": [
+      "prettier-plugin-sh"
+    ],
+    "overrides": [
+      {
+        "files": "*.sh",
+        "options": {
+          "parser": "sh"
+        }
+      }
+    ]
+  }
+}

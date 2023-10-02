@@ -1,0 +1,17 @@
+{
+  "name": "override-parser",
+  "version": "0.0.0",
+  "private": true,
+  "prettier": {
+    "overrides": [
+      {
+        "files": [
+          "*.js"
+        ],
+        "options": {
+          "parser": "babel-ts"
+        }
+      }
+    ]
+  }
+}

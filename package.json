@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "private": true,
   "license": "GPLv3+",
-  "packageManager": "yarn@1",
   "devDependencies": {
     "closurecompiler-externs": "1.0.4",
     "diff-match-patch": "1.0.5"

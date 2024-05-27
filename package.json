@@ -12,5 +12,8 @@
   "dependencies": {
     "google-closure-compiler": "20220405.0.0",
     "node-zopfli-es": "1.0.7"
+  },
+  "prettier": {
+    "trailingComma": "es5"
   }
 }

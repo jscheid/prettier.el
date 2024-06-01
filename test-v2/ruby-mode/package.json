@@ -4,5 +4,8 @@
   "private": true,
   "devDependencies": {
     "@prettier/plugin-ruby": "2.1.0"
+  },
+  "prettier": {
+    "trailingComma": "none"
   }
 }

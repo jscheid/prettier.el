@@ -21,6 +21,8 @@
 function noop() {}
 global["console"]["warn"] = noop;
 
+process.env = global.env;
+
 // Hack to circumvent Closure Compiler CommonJS resolution
 const externalRequire = require;
 
@@ -48,7 +50,15 @@ const ignoreParser = "ignored";
 
 const syncBeacon = Buffer.from("#prettier.el-sync#\n");
 
-/** @type{PrettierAPI} */
+/**
+ * @typedef {{
+ *            api: !(PrettierAPI|V3CompatAPI),
+ *            require: !function(string)
+ *          }}
+ */
+var PrettierAPIAndRequire;
+
+/** @type{PrettierAPIAndRequire} */
 let globalPrettier;
 
 /**
@@ -123,7 +133,7 @@ function makeU32(val) {
  * Find a globally installed Prettier or error if not found. Memoize results for
  * future lookups.
  *
- * @return {!PrettierAPI | !Error}
+ * @return {PrettierAPIAndRequire | !Error}
  */
 function getGlobalPrettier() {
   if (globalPrettier) {
@@ -164,7 +174,7 @@ function getGlobalPrettier() {
   for (let i = 0; i < pathOptions.length; ++i) {
     if (pathOptions[i]) {
       try {
-        return globalRequire(pathOptions[i]);
+        return { api: globalRequire(pathOptions[i]), require: globalRequire };
       } catch (e) {
         if (
           !(e instanceof Error) ||
@@ -225,7 +235,7 @@ function findFileInAncestry(directory, fileNames) {
 /**
  * Try requiring the Prettier package using the given require function.
  *
- * @param {!Function} targetRequire  The require function to use.
+ * @param {!function(string)} targetRequire  The require function to use.
  * @return {PrettierAPI}  The Prettier package if found, or null if not found.
  */
 function tryRequirePrettier(targetRequire) {
@@ -252,7 +262,7 @@ function tryRequirePrettier(targetRequire) {
  * Find locally installed Prettier, or null if not found.
  *
  * @param {!string} directory  The directory for which to find a local Prettier installation.
- * @return {PrettierAPI}  The Prettier package if found, or null if not found.
+ * @return {PrettierAPIAndRequire|null}  The Prettier package if found, or null if not found.
  */
 function getLocalPrettier(directory) {
   const targetRequire = createRequire(path["join"](directory, "package.json"));
@@ -260,7 +270,7 @@ function getLocalPrettier(directory) {
   // Try loading prettier for non-PnP packages and return it if found.
   const prettier = tryRequirePrettier(targetRequire);
   if (prettier) {
-    return prettier;
+    return { api: prettier, require: targetRequire };
   }
 
   // Try finding .pnp.[c]js and bail out if we can't find it.
@@ -271,7 +281,12 @@ function getLocalPrettier(directory) {
 
   // Setup PnP API and retry loading prettier.
   targetRequire(pnpJs)["setup"]();
-  return tryRequirePrettier(targetRequire);
+  const prettierFromPnp = tryRequirePrettier(targetRequire);
+  if (!prettierFromPnp) {
+    return null;
+  }
+
+  return { api: prettierFromPnp, require: targetRequire };
 }
 
 /**
@@ -282,7 +297,7 @@ function getLocalPrettier(directory) {
  * @param {!string} directory The directory for which to find the Prettier
  *    package.
  *
- * @return {!PrettierAPI | !Error}
+ * @return {PrettierAPIAndRequire | !Error}
  */
 function getPrettierForDirectory(directory) {
   if (prettierCache.has(directory)) {
@@ -318,7 +333,7 @@ function getPrettierForDirectory(directory) {
  *
  * @param {!string} filepath
  *
- * @return {!PrettierAPI | !V3CompatAPI} The Prettier package found.
+ * @return {PrettierAPIAndRequire} The Prettier package found.
  */
 function getPrettierForPath(filepath) {
   const result = path["isAbsolute"](filepath)
@@ -328,8 +343,9 @@ function getPrettierForPath(filepath) {
     throw result;
   }
 
-  if (isV3Later(result)) return result;
-  return new V3CompatAPI(result);
+  const { api } = result;
+  if (isV3Later(api)) return result;
+  return { api: new V3CompatAPI(api), require: result.require };
 }
 
 function parseParsers(parsersString) {
@@ -366,6 +382,7 @@ async function bestParser(prettier, parsers, options, filepath, inferParser) {
       ["ignorePath"]: findFileInAncestry(path["dirname"](filepath), [
         ".prettierignore",
       ]),
+      ["plugins"]: options["plugins"],
     });
   }
 
@@ -433,7 +450,7 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
 
       const editorconfig = packet[1] === "E".charCodeAt(0);
       const filepath = packet.toString("utf-8", 2, newlineIndex1);
-      const prettier = getPrettierForPath(filepath);
+      const { api: prettier } = getPrettierForPath(filepath);
       if (filepath.length > 0) {
         await prettier.resolveConfig(filepath, {
           editorconfig,
@@ -483,6 +500,20 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
   }
 
   /**
+   * Make plugin module paths absolute by resolving with the given
+   * require function,
+   *
+   * @param options  the Prettier options, will be modified in place.
+   * @param {function(string)} req  the require function to use for resolving modules.
+   */
+  function postProcessOptions(options, req) {
+    const plugins = options["plugins"];
+    if (plugins) {
+      options["plugins"] = plugins.map((plugin) => req["resolve"](plugin));
+    }
+  }
+
+  /**
    * Handle a request for formatting a file.
    *
    * @param {!Buffer} packet
@@ -495,7 +526,7 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
     const inferParser = config["infer-parser"];
 
     try {
-      const prettier = getPrettierForPath(filepath);
+      const { api: prettier, require: req } = getPrettierForPath(filepath);
 
       const timeBeforeFormat = Date.now();
 
@@ -507,6 +538,7 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
           })
           .then((x) => x || {});
       }
+      postProcessOptions(options, req);
 
       const parser = await bestParser(
         prettier,
@@ -632,11 +664,12 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
       );
       const parsers = parseParsers(parsersString);
 
-      const prettier = getPrettierForPath(filepath);
+      const { api: prettier, require: req } = getPrettierForPath(filepath);
 
       const options = await prettier
         .resolveConfig(filepath, { editorconfig })
         .then((x) => x || {});
+      postProcessOptions(options, req);
 
       let optionsFromParser;
       if (isV3Later(prettier)) {
@@ -763,7 +796,7 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
  *
  * @param {!string} filename  Filename to be used to construct the require function.
  *
- * @return {!Function} the require function.
+ * @return {!function(string)} the require function.
  */
 function createRequire(filename) {
   // Added in Node v12.2.0
@@ -785,7 +818,7 @@ function createRequire(filename) {
  *
  * @param {!string} filename  Filename to be used to construct the require function.
  *
- * @return {!Function} the require function.
+ * @return {!function(string)} the require function.
  */
 function _createRequire(filename) {
   const mod = new nativeModule["Module"](filename, null);
@@ -800,7 +833,7 @@ function _createRequire(filename) {
 // The following is for Prettier version 2 and below.
 
 class V3CompatAPI {
-  /** @param {!PrettierAPI} prettier */
+  /** @param {!(PrettierAPI|V3CompatAPI)} prettier */
   constructor(prettier) {
     this.prettier = prettier;
   }
@@ -825,7 +858,7 @@ class V3CompatAPI {
 }
 
 /**
- * @param {!PrettierAPI | V3CompatAPI} prettier
+ * @param {!(PrettierAPI|V3CompatAPI)} prettier
  * @return {!boolean}
  */
 function isV3Later(prettier) {

@@ -375,14 +375,7 @@ function compatParsers(parsers) {
   );
 }
 
-async function bestParser(
-  prettier,
-  parsers,
-  options,
-  filepath,
-  inferParser,
-  req
-) {
+async function bestParser(prettier, parsers, options, filepath, inferParser) {
   let fileInfo = null;
   if (filepath) {
     fileInfo = await prettier.getFileInfo(filepath, {
@@ -552,8 +545,7 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
         compatParsers(config["parsers"]),
         options,
         filepath,
-        inferParser,
-        req
+        inferParser
       );
 
       const out = [syncBeacon];
@@ -713,8 +705,7 @@ global["m"] = function m(baseScript, cacheFilename, inp) {
         parsers,
         optionsFromParser,
         filepath,
-        inferParser,
-        req
+        inferParser
       );
       const optionsBuf = createBase64Buffer(
         JSON.stringify({
@@ -867,7 +858,7 @@ class V3CompatAPI {
 }
 
 /**
- * @param {!PrettierAPI | V3CompatAPI} prettier
+ * @param {!(PrettierAPI|V3CompatAPI)} prettier
  * @return {!boolean}
  */
 function isV3Later(prettier) {

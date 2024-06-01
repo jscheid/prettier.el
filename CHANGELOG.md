@@ -13,6 +13,7 @@ and this project adheres to
 
 - `prettier-diff-timeout-seconds` customization option
 - `prettier-diff-edit-cost` customization option
+- Support for Prettier 3
 
 ## Changed
 

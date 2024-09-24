@@ -7,9 +7,18 @@ the included [Vagrant](https://www.vagrantup.com/) box. Install Vagrant, then
 run `vagrant up --provider=virtualbox` in this directory to initialize the
 environment. Run the below commands prefixed by `./with-vagrant`.
 
-If you would rather not use Vagrant, you can derive instructions for how to set
-up your local build environment from `Vagrantfile`; if you do so, please
-consider sending a PR with instructions.
+### Building locally
+
+Building locally is not tested thoroughly and Vagrant is the recommended
+way. However, requirements are provided below.
+
+#### Requirements
+
+:warning: As the JS tooling evolves the documentation below might get outdated :warning:
+
+* [node-zopfli requirements](https://github.com/pierreinglebert/node-zopfli?tab=readme-ov-file#prerequisites-for-building)
+   and specifically a working [node-gyp](https://github.com/nodejs/node-gyp#installation) installation.
+* `pandoc` and matching [panflute version](https://github.com/sergiocorreia/panflute?tab=readme-ov-file#note-on-versions).
 
 ## Building
 

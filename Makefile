@@ -60,7 +60,7 @@ dist/bootstrap-min.js: bootstrap.js externs.js
 		--language_out=ECMASCRIPT_2017
 
 dist/prettier-el.js.gz.base64: build/prettier-el-min.js
-	node -e "const fs = require('fs'); const zopfli = require('node-zopfli-es'); fs.createReadStream('$<').pipe(zopfli.createGzip()).pipe(process.stdout)" \
+	node -e "const fs = require('fs'); const zopfli = require('node-zopfli'); fs.createReadStream('$<').pipe(zopfli.createGzip()).pipe(process.stdout)" \
 		| base64 --wrap=70 > $@
 
 dist/prettier-pkg.el: prettier.el build-tools/create-pkg-el.el
